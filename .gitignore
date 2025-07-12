@@ -21,4 +21,6 @@ target/
 **/crash.log
 **/crash.*.log
 **/.terraformrc
-**/terraform.rc
+**/terraform.rcvault/edc-token.txt
+vault/vault-keys.json
+vault/edc-token.txt

@@ -4,6 +4,10 @@ terraform {
       source  = "hashicorp/kubernetes"
       version = ">= 2.0"
     }
+    helm = {
+      source  = "hashicorp/helm"
+      version = "2.12.1"
+    }
     null = {
       source = "hashicorp/null"
       version = ">= 3.0"
@@ -12,14 +16,8 @@ terraform {
       source = "hashicorp/local"
       version = ">= 2.0"
     }
-    helm = {
-      source  = "hashicorp/helm"
-      version = ">= 2.0"
-    }
   }
 }
-
-# Kubernetes provider will be configured after minikube is ready
 
 variable "cluster_name" {
   type    = string
@@ -64,16 +62,31 @@ locals {
   ]
 }
 
+# Step 1: Setup Minikube
 resource "null_resource" "minikube" {
   provisioner "local-exec" {
     command = <<EOT
+      # Delete existing cluster if exists
+      if minikube profile list 2>/dev/null | grep -q "${var.cluster_name}"; then
+        minikube delete --profile='${var.cluster_name}'
+      fi
+      
+      # Start Minikube
       minikube start --cpus=${var.cluster_cpus} --memory=${var.cluster_memory}gb --profile='${var.cluster_name}'
       minikube profile ${var.cluster_name}
       minikube addons enable metrics-server
       minikube addons enable ingress
       minikube addons enable ingress-dns
       minikube ip --profile='${var.cluster_name}' | tr -d '\n' > minikube_ip.txt
+      
+      # Set kubectl context
+      kubectl config use-context ${var.cluster_name}
     EOT
+  }
+
+  provisioner "local-exec" {
+    when    = destroy
+    command = "minikube delete --profile='tractus-x' || true"
   }
 }
 
@@ -82,22 +95,7 @@ data "local_file" "minikube_ip" {
   depends_on = [null_resource.minikube]
 }
 
-# Configure Kubernetes provider after minikube is ready
-provider "kubernetes" {
-  config_path    = "~/.kube/config"
-  config_context = "minikube-${var.cluster_name}"
-  depends_on     = [null_resource.minikube]
-}
-
-# Configure Helm provider
-provider "helm" {
-  kubernetes {
-    config_path    = "~/.kube/config"
-    config_context = "minikube-${var.cluster_name}"
-  }
-  depends_on = [null_resource.minikube]
-}
-
+# Step 2: Create namespaces
 resource "null_resource" "create_namespaces" {
   depends_on = [null_resource.minikube]
   provisioner "local-exec" {
@@ -109,6 +107,7 @@ resource "null_resource" "create_namespaces" {
   }
 }
 
+# Step 3: Install Vault using your custom script
 resource "null_resource" "install_vault" {
   depends_on = [null_resource.create_namespaces]
   provisioner "local-exec" {
@@ -120,7 +119,20 @@ resource "null_resource" "install_vault" {
   }
 }
 
-# Install ArgoCD using Helm
+# Configure providers after cluster is ready
+provider "kubernetes" {
+  config_path    = "~/.kube/config"
+  config_context = var.cluster_name
+}
+
+provider "helm" {
+  kubernetes {
+    config_path    = "~/.kube/config"
+    config_context = var.cluster_name
+  }
+}
+
+# Step 4: Install ArgoCD using Helm (simplified)
 resource "helm_release" "argocd" {
   name       = "argocd"
   repository = "https://argoproj.github.io/argo-helm"
@@ -130,6 +142,7 @@ resource "helm_release" "argocd" {
 
   depends_on = [null_resource.install_vault]
 
+  # Basic server configuration only
   set {
     name  = "server.ingress.enabled"
     value = "true"
@@ -146,11 +159,6 @@ resource "helm_release" "argocd" {
   }
 
   set {
-    name  = "server.ingress.annotations.kubernetes\\.io/ingress\\.class"
-    value = "nginx"
-  }
-
-  set {
     name  = "server.ingress.annotations.nginx\\.ingress\\.kubernetes\\.io/ssl-redirect"
     value = "false"
   }
@@ -161,28 +169,8 @@ resource "helm_release" "argocd" {
   }
 
   set {
-    name  = "server.ingress.tls[0].secretName"
-    value = "argocd-server-tls"
-  }
-
-  set {
-    name  = "server.ingress.tls[0].hosts[0]"
-    value = "argo.tx.test"
-  }
-
-  set {
     name  = "server.extraArgs[0]"
     value = "--insecure"
-  }
-
-  set {
-    name  = "server.extraArgs[1]"
-    value = "--rootpath"
-  }
-
-  set {
-    name  = "server.extraArgs[2]"
-    value = "/"
   }
 
   set {
@@ -191,77 +179,91 @@ resource "helm_release" "argocd" {
   }
 }
 
-# Create ArgoCD Application for umbrella deployment
-resource "kubernetes_manifest" "umbrella_application" {
-  depends_on = [helm_release.argocd]
-
-  manifest = {
-    apiVersion = "argoproj.io/v1alpha1"
-    kind       = "Application"
-    metadata = {
-      name      = "umbrella"
-      namespace = "argocd"
-    }
-    spec = {
-      project = "default"
-      source = {
-        repoURL        = "https://github.com/aminshuvo/tractus-x-umbrella-umbrella"
-        targetRevision = "main"
-        path          = "charts/umbrella"
-        helm = {
-          valueFiles = ["values-dev.yaml"]
-        }
-      }
-      destination = {
-        server    = "https://kubernetes.default.svc"
-        namespace = "umbrella"
-      }
-      syncPolicy = {
-        automated = {
-          prune      = true
-          selfHeal   = true
-          allowEmpty = false
-        }
-        syncOptions = [
-          "CreateNamespace=true",
-          "PrunePropagationPolicy=foreground",
-          "PruneLast=true"
-        ]
-      }
-    }
-  }
-}
-
-# Wait for ArgoCD to be ready
+# Wait for ArgoCD to be ready (simplified)
 resource "null_resource" "wait_for_argocd" {
   depends_on = [helm_release.argocd]
 
   provisioner "local-exec" {
     command = <<EOT
-      kubectl wait --for=condition=available --timeout=300s deployment/argocd-server -n argocd
-      kubectl wait --for=condition=available --timeout=300s deployment/argocd-repo-server -n argocd
-      kubectl wait --for=condition=available --timeout=300s deployment/argocd-application-controller -n argocd
+      # Simple wait approach - just check if key pods are running
+      echo "Waiting for ArgoCD pods to be ready..."
+      kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=argocd-server -n argocd --timeout=300s
+      kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=argocd-repo-server -n argocd --timeout=300s
+      kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=argocd-application-controller -n argocd --timeout=300s
+      
+      echo "ArgoCD is ready!"
     EOT
   }
 }
 
-# Print ArgoCD admin password
-resource "null_resource" "print_argocd_info" {
+# Step 5: Apply ArgoCD applications from ../argocd directory
+resource "null_resource" "apply_argocd_apps" {
   depends_on = [null_resource.wait_for_argocd]
 
   provisioner "local-exec" {
     command = <<EOT
-      echo "=== ArgoCD Setup Complete ==="
+      # Apply ArgoCD application configurations
+      if [ -d "../argocd/applications" ]; then
+        kubectl apply -f ../argocd/applications/
+        echo "Applied ArgoCD applications"
+      else
+        echo "No ArgoCD applications directory found"
+      fi
+      
+      if [ -d "../argocd/projects" ]; then
+        kubectl apply -f ../argocd/projects/
+        echo "Applied ArgoCD projects"
+      fi
+      
+      if [ -d "../argocd/repositories" ]; then
+        kubectl apply -f ../argocd/repositories/
+        echo "Applied ArgoCD repositories"
+      fi
+    EOT
+  }
+}
+
+# Generate hosts entry
+resource "local_file" "hosts_entry" {
+  content  = "${data.local_file.minikube_ip.content} ${join(" ", local.domains)}\n"
+  filename = "${path.module}/hosts_entry.txt"
+  depends_on = [data.local_file.minikube_ip]
+}
+
+# Print final info
+resource "null_resource" "print_argocd_info" {
+  depends_on = [null_resource.apply_argocd_apps, local_file.hosts_entry]
+
+  provisioner "local-exec" {
+    command = <<EOT
+      echo "=== Tractus-X Development Environment Ready ==="
       echo "ArgoCD URL: http://argo.tx.test"
       echo "Username: admin"
       echo "Password: admin123"
       echo ""
-      echo "Please add the following entry to your /etc/hosts file:"
-      echo "$(cat minikube_ip.txt) argo.tx.test"
+      echo "Minikube IP: $(cat minikube_ip.txt)"
       echo ""
-      echo "You can also access ArgoCD via port-forward:"
-      echo "kubectl port-forward svc/argocd-server -n argocd 8080:443"
-      echo "Then visit: https://localhost:8080"
+      echo "Add to /etc/hosts:"
+      cat hosts_entry.txt
+      echo ""
+      echo "Check ArgoCD applications:"
+      echo "kubectl get applications -n argocd"
+      echo ""
+      echo "Port-forward alternative:"
+      echo "kubectl port-forward svc/argocd-server -n argocd 8080:80"
     EOT
   }
+}
+
+# Outputs
+output "minikube_ip" {
+  value = data.local_file.minikube_ip.content
+}
+
+output "argocd_url" {
+  value = "http://argo.tx.test"
+}
+
+output "hosts_entry" {
+  value = local_file.hosts_entry.content
 } 

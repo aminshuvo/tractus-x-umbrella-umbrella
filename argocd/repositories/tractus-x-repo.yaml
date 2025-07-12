@@ -1,0 +1,13 @@
+# argocd/repositories/tractus-x-repo.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: tractus-x-umbrella-repo
+  namespace: argocd
+  labels:
+    argocd.argoproj.io/secret-type: repository
+type: Opaque
+stringData:
+  url: https://github.com/aminshuvo/tractus-x-umbrella-umbrella
+  type: git
+  name: tractus-x-umbrella

@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: local-helm-repo
+  namespace: argocd
+  labels:
+    argocd.argoproj.io/secret-type: repository
+stringData:
+  type: helm
+  name: local-charts
+  url: https://aminshuvo.github.io/tractus-x-umbrella-umbrella/charts
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: local-helm-repo-config
+  namespace: argocd
+data:
+  repositories: |
+    - name: local-charts
+      type: helm
+      url: https://aminshuvo.github.io/tractus-x-umbrella-umbrella/charts 
