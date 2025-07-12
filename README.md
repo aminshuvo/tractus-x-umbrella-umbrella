@@ -19,15 +19,6 @@ The Tractus-X Umbrella provides a foundation for running end-to-end tests or cre
 ### Required Tools
 Before starting the installation, ensure you have the following tools installed:
 
-```bash
-# Check tool versions
-helm version
-docker version
-terraform version
-minikube version
-kubectl version --client
-```
-
 **Tested Versions:**
 - **Helm**: v3.18.3
 - **Docker**: 28.3.1
@@ -435,37 +426,3 @@ rm -f terraform.tfstate*
 # Reinitialize Terraform
 terraform init
 ```
-
-## 📚 Additional Resources
-
-- [Tractus-X Documentation](https://docs.catena-x.net/)
-- [Eclipse Tractus-X](https://projects.eclipse.org/projects/automotive.tractusx)
-- [Catena-X Network](https://catena-x.net/en/)
-- [Minikube Documentation](https://minikube.sigs.k8s.io/docs/)
-- [Helm Documentation](https://helm.sh/docs/)
-
-## 🤝 Contributing
-
-This repository includes local patches and customizations. When contributing:
-
-1. Test your changes thoroughly
-2. Update documentation as needed
-3. Follow the existing code style
-4. Ensure all components are working correctly
-
-## 📄 License
-
-This work is licensed under the [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/legalcode).
-
-- SPDX-License-Identifier: CC-BY-4.0
-- SPDX-FileCopyrightText: 2024 Contributors to the Eclipse Foundation
-
-## ⚠️ Important Notes
-
-- **Resource Requirements**: Ensure your system meets the minimum CPU and memory requirements
-- **Local Development**: This setup is designed for local development and testing
-- **Security**: Vault keys and tokens should be kept secure and not committed to version control
-- **Persistence**: By default, persistence is disabled for development environments
-- **Network**: All services use HTTP (not HTTPS) for local development
-
----
