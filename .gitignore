@@ -1,0 +1,24 @@
+.vscode/
+.idea/
+**/*.tgz
+Chart.lock
+*.iml
+target/
+**/values-local.yaml
+**/your-values.yaml
+
+# Terraform files
+**/.terraform/
+**/.terraform.lock.hcl
+**/terraform.tfstate
+**/terraform.tfstate.*
+**/*.tfstate
+**/*.tfstate.*
+**/minikube_ip.txt
+**/vault-edc-token-secret.yaml
+**/.terraform.tfstate.lock.info
+**/.terraform.tfstate.lock.backup
+**/crash.log
+**/crash.*.log
+**/.terraformrc
+**/terraform.rc

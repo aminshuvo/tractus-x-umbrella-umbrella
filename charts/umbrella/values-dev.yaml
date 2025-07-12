@@ -1,0 +1,1754 @@
+# Minimal values for tx-data-provider deployment
+# Only includes tx-data-provider and its dependencies
+
+# Disable all components except tx-data-provider
+portal:
+  enabled: true
+  replicaCount: 1
+  postgresql:
+    nameOverride: "portal-backend-postgresql"
+    architecture: standalone
+    auth:
+      password: "dbpasswordportal"
+      portalPassword: "dbpasswordportal"
+      replicationPassword: "dbpasswordportal"
+      provisioningPassword: "dbpasswordportal"
+    primary:
+      persistence:
+        enabled: false
+  portalAddress: "http://portal.tx.test"
+  portalBackendAddress: "http://portal-backend.tx.test"
+  centralidp:
+    address: "http://centralidp.tx.test"
+  sharedidpAddress: "http://sharedidp.tx.test"
+  semanticsAddress: "http://semantics.tx.test"
+  bpdm:
+    poolAddress: "http://business-partners.tx.test"
+    poolApiPath: "/pool/v6"
+    portalGateAddress: "http://business-partners.tx.test"
+    portalGateApiPath: "/gate/v6"
+  custodianAddress: "http://ssi-dim-wallet-stub.tx.test"
+  dimWrapper:
+    baseAddress: "http://ssi-dim-wallet-stub.tx.test"
+    apiPath: "/api/dim"
+    tokenAddress: "http://ssi-dim-wallet-stub.tx.test/oauth/token"
+  decentralIdentityManagementAuthAddress: "http://ssi-dim-wallet-stub.tx.test/api/sts"
+  sdfactoryAddress: "http://sdfactory.tx.test"
+  clearinghouseAddress: "http://validation.tx.test"
+  clearinghouseTokenAddress: "http://someiam.tx.test/realms/example/protocol/openid-connect/token"
+  issuerComponentAddress: "http://ssi-credential-issuer.tx.test"
+  frontend:
+    ingress:
+      enabled: true
+      annotations:
+        # uncomment the following line for tls
+        # cert-manager.io/cluster-issuer: "my-ca-issuer"
+        nginx.ingress.kubernetes.io/rewrite-target: "/$1"
+        nginx.ingress.kubernetes.io/use-regex: "true"
+        nginx.ingress.kubernetes.io/enable-cors: "true"
+        nginx.ingress.kubernetes.io/cors-allow-origin: "http://*.tx.test"
+      # uncomment the following lines for tls
+      # tls:
+      #   # -- Provide tls secret.
+      #   - secretName: "portal.tx.test-tls"
+      #     # -- Provide host for tls secret.
+      #     hosts:
+      #       - "portal.tx.test"
+      hosts:
+        - host: "portal.tx.test"
+          paths:
+            - path: "/(.*)"
+              pathType: "ImplementationSpecific"
+              backend:
+                service: "portal"
+                port: 8080
+            - path: "/registration/(.*)"
+              pathType: "ImplementationSpecific"
+              backend:
+                service: "registration"
+                port: 8080
+            - path: "/((assets|documentation)/.*)"
+              pathType: "ImplementationSpecific"
+              backend:
+                service: "assets"
+                port: 8080
+  backend:
+    dotnetEnvironment: "Development"
+    useDimWallet: true
+    keycloak:
+      central:
+        clientId: "sa-cl1-reg-2"
+        clientSecret: "changeme"
+        jwtBearerOptions:
+          requireHttpsMetadata: "false"
+      shared:
+        clientId: "sa-cl1-reg-1"
+        clientSecret: "changeme"
+    registration:
+      logging:
+        default: "Debug"
+        bpdmLibrary: "Debug"
+        registrationService: "Debug"
+      swaggerEnabled: true
+    administration:
+      logging:
+        default: "Debug"
+        businessLogic: "Debug"
+        sdfactoryLibrary: "Debug"
+        bpdmLibrary: "Debug"
+        custodianLibrary: "Debug"
+      serviceAccount:
+        encryptionConfigs:
+          index0:
+            encryptionKey: "deb8261ec7b89c344f1c5ef5a11606e305f14e0d231b1357d90ad0180c5081d3"
+      issuerdid: "did:web:ssi-dim-wallet-stub.tx.test:BPNL00000003CRHK"
+      swaggerEnabled: true
+    appmarketplace:
+      logging:
+        default: "Debug"
+        offersLibrary: "Debug"
+      swaggerEnabled: true
+    services:
+      logging:
+        default: "Debug"
+        offersLibrary: "Debug"
+      swaggerEnabled: true
+    notification:
+      logging:
+        default: "Debug"
+      swaggerEnabled: true
+    processesworker:
+      clearinghouseConnectDisabled: true
+      logging:
+        default: "Debug"
+        processesLibrary: "Debug"
+        bpdmLibrary: "Debug"
+        clearinghouseLibrary: "Debug"
+        custodianLibrary: "Debug"
+        sdfactoryLibrary: "Debug"
+        offerProvider: "Debug"
+      bpdm:
+        clientId: &bpdmAdminClientId "sa-cl7-cx-5"
+        clientSecret: &bpdmAdminClientSecret "changeme"
+      # -- no configuration for clearinghouse because it's an external component
+      # clientId and clientSecret aren't in the centralidp Keycloak
+      # clearinghouse:
+      #   clientId: "clearinghouse-client-id"
+      #   clientSecret: ""
+      custodian:
+        clientId: "sa-cl5-custodian-2"
+        clientSecret: "changeme"
+      sdfactory:
+        issuerBpn: "BPNL00000003CRHK"
+        clientId: "sa-cl8-cx-1"
+        clientSecret: "changeme"
+      offerprovider:
+        clientId: "sa-cl2-03"
+        clientSecret: "changeme"
+      dim:
+        clientId: "sa-cl2-05"
+        clientSecret: "changeme"
+        grantType: "client_credentials"
+        scope: "openid"
+        baseAddress: "http://ssi-dim-wallet-stub.tx.test"
+        universalResolverAddress: "https://dev.uniresolver.io/"
+        encryptionConfigs:
+          index0:
+            encryptionKey:
+              "6cbaf47ee30c778088e6faa44e2f0eed98beda86db06c7d2e37e32ab78e14b33"
+      issuerComponent:
+        clientId: "sa-cl2-04"
+        clientSecret: "changeme"
+        encryptionConfigs:
+          index0:
+            encryptionKey:
+              "39ffab76f99ece1e4ac72f973d5c703737324a75c6445e84fa317a7833476a15"
+      bpnDidResolver:
+        # -- ApiKey for management endpoint of the bpnDidResolver. Secret-key 'bpndidresolver-api-key'.
+        apiKey: ""
+      onboardingServiceProvider:
+        encryptionConfigs:
+          index0:
+            cipherMode: "CBC"
+            paddingMode: "PKCS7"
+            encryptionKey:
+              "f7bc3d99f1ace73e7a75b794affbbc26206ab29909821a102aaccb2e95e45f7c"
+          index1:
+            encryptionKey:
+              "8027152fe7a869c88acc86981760acd70ff1d660c2bd129eece94edef933caf7"
+      invitation:
+        encryptionConfigs:
+          index0:
+            encryptionKey:
+              "d84fea29d6eac0fa51e36682b164e7d61693cd4202ed04306d2d9c5d46655e2c"
+      mailing:
+        encryptionConfigs:
+          index0:
+            encryptionKey:
+              "d2e27d71b018cb36029184852f1baa3e26891be94718f77de4c7cc6c882fe317"
+    mailing:
+      host: "smtp.tx.test"
+      port: "587"
+      user: "smtp-user"
+      senderEmail: "smtp@tx.test"
+      password: ""
+    portalmigrations:
+      seeding:
+        seedTestData:
+          enabled: true
+          useOwnConfigMap:
+            configMap: "portal-testdata"
+            filename: "test"
+            companies:
+              # BPN is retrieved from participant id of the dataconsumerOne
+              dataconsumerOne:
+                name: "BPN_OEM_C"
+                connectorUrl: "http://dataconsumer-1-controlplane.tx.test/api/v1/dsp"
+                connectorName: "BPN OEM C Connector"
+              # BPN is retrieved from participant id of the tx-data-provider
+              tx-data-provider:
+                name: "BPN_OEM_A"
+                connectorUrl: "http://dataprovider-controlplane.tx.test/api/v1/dsp"
+                connectorName: "BPN OEM A Connector"
+              # BPN is retrieved from participant id of the dataconsumerTwo
+              dataconsumerTwo:
+                name: "BPN_OEM_B"
+                connectorUrl: "http://dataconsumer-2-controlplane.tx.test/api/v1/dsp"
+                connectorName: "BPN OEM B Connector"
+              company4:
+                name: "BPN_IRS_TEST"
+                bpn: "BPNL00000003AWSS"
+                connectorUrl: "http://company4-controlplane.tx.test/api/v1/dsp"
+                connectorName: "BPN IRS TEST Connector"
+              company5:
+                name: "BPN_N_TIER_A"
+                bpn: "BPNL00000003B0Q0"
+                connectorUrl: "http://company5-controlplane.tx.test/api/v1/dsp"
+                connectorName: "BPN N TIER A Connector"
+              company6:
+                name: "BPN_TRACEX_A_SITE_A"
+                bpn: "BPNS0000000008ZZ"
+                connectorUrl: "http://company6-controlplane.tx.test/api/v1/dsp"
+                connectorName: "BPN TRACEX A SITE A Connector"
+              company7:
+                name: "BPN_TRACEX_B"
+                bpn: "BPNL00000003CNKC"
+                connectorUrl: "http://company7-controlplane.tx.test/api/v1/dsp"
+                connectorName: "BPN TRACEX B Connector"
+              company8:
+                name: "BPN_DISMANTLER"
+                bpn: "BPNL00000003B6LU"
+                connectorUrl: "http://company8-controlplane.tx.test/api/v1/dsp"
+                connectorName: "BPN DISMANTLER Connector"
+              company9:
+                name: "BPN_TRACEX_A"
+                bpn: "BPNL00000003CML1"
+                connectorUrl: "http://company9-controlplane.tx.test/api/v1/dsp"
+                connectorName: "BPN TRACEX A Connector"
+              company10:
+                name: "BPN_TRACEX_B_SITE_A"
+                bpn: "BPNS00000008BDFH"
+                connectorUrl: "http://company10-controlplane.tx.test/api/v1/dsp"
+                connectorName: "BPN TRACEX B SITE A Connector"
+              company11:
+                name: "BPN_TIER_A"
+                bpn: "BPNL00000003B2OM"
+                connectorUrl: "http://company11-controlplane.tx.test/api/v1/dsp"
+                connectorName: "BPN TIER A Connector"
+              company12:
+                name: "BPN_TIER_C"
+                bpn: "BPNL00000003CSGV"
+                connectorUrl: "http://company12-controlplane.tx.test/api/v1/dsp"
+                connectorName: "BPN TIER C Connector"
+              company13:
+                name: "BPN_TIER_B"
+                bpn: "BPNL00000003B5MJ"
+                connectorUrl: "http://company13-controlplane.tx.test/api/v1/dsp"
+                connectorName: "BPN TIER B Connector"
+              company14:
+                name: "BPN_SUB_TIER_B"
+                bpn: "BPNL00000003AXS3"
+                connectorUrl: "http://company14-controlplane.tx.test/api/v1/dsp"
+                connectorName: "BPN SUB TIER B Connector"
+              company15:
+                name: "BPN_SUB_TIER_A"
+                bpn: "BPNL00000003B3NX"
+                connectorUrl: "http://company15-controlplane.tx.test/api/v1/dsp"
+                connectorName: "BPN SUB TIER A Connector"
+              company16:
+                name: "BPN_SUB_TIER_C"
+                bpn: "BPNL00000000BJTL"
+                connectorUrl: "http://company16-controlplane.tx.test/api/v1/dsp"
+                connectorName: "BPN SUB TIER C Connector"
+      logging:
+        default: "Debug"
+    provisioning:
+      sharedRealm:
+        smtpServer:
+          host: "smtp.tx.test"
+          port: "587"
+          user: "smtp-user"
+          password: ""
+          from: "smtp@tx.test"
+          replyTo: "smtp@tx.test"
+    # -- docs: http://portal-backend.tx.test/api/administration/swagger/index.html
+    # http://portal-backend.tx.test/api/registration/swagger/index.html
+    # http://portal-backend.tx.test/api/apps/swagger/index.html
+    # http://portal-backend.tx.test/api/services/swagger/index.html
+    # http://portal-backend.tx.test/api/notification/swagger/index.html
+    ingress:
+      enabled: true
+      name: "portal-backend"
+      annotations:
+        # uncomment the following line for tls
+        # cert-manager.io/cluster-issuer: "my-ca-issuer"
+        nginx.ingress.kubernetes.io/use-regex: "true"
+        nginx.ingress.kubernetes.io/enable-cors: "true"
+        nginx.ingress.kubernetes.io/proxy-body-size: "8m"
+        nginx.ingress.kubernetes.io/cors-allow-origin: "http://localhost:3000, http://*.tx.test"
+      # uncomment the following lines for tls
+      # tls:
+      #   # -- Provide tls secret.
+      #   - secretName: "portal-backend.tx.test-tls"
+      #     # -- Provide host for tls secret.
+      #     hosts:
+      #       - "portal-backend.tx.test"
+      hosts:
+        - host: "portal-backend.tx.test"
+          paths:
+            - path: "/api/registration"
+              pathType: "Prefix"
+              backend:
+                service: "registration-service"
+                port: 8080
+            - path: "/api/administration"
+              pathType: "Prefix"
+              backend:
+                service: "administration-service"
+                port: 8080
+            - path: "/api/notification"
+              pathType: "Prefix"
+              backend:
+                service: "notification-service"
+                port: 8080
+            - path: "/api/provisioning"
+              pathType: "Prefix"
+              backend:
+                service: "provisioning-service"
+                port: 8080
+            - path: "/api/apps"
+              pathType: "Prefix"
+              backend:
+                service: "marketplace-app-service"
+                port: 8080
+            - path: "/api/services"
+              pathType: "Prefix"
+              backend:
+                service: "services-service"
+                port: 8080
+
+centralidp:
+  enabled: true
+  keycloak:
+    nameOverride: "centralidp"
+    replicaCount: 1
+    auth:
+      adminPassword: "adminconsolepwcentralidp"
+    postgresql:
+      nameOverride: "centralidp-postgresql"
+      auth:
+        password: "dbpasswordcentralidp"
+        postgresPassword: "dbpasswordcentralidp"
+      architecture: standalone
+      primary:
+        persistence:
+          enabled: false
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+          requests:
+            cpu: 200m
+            memory: 256Mi
+    ingress:
+      enabled: true
+      ingressClassName: "nginx"
+      hostname: "centralidp.tx.test"
+      annotations:
+        nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+        nginx.ingress.kubernetes.io/cors-allow-methods: "PUT, GET, POST, OPTIONS"
+        nginx.ingress.kubernetes.io/cors-allow-origin: "http://centralidp.tx.test"
+        nginx.ingress.kubernetes.io/enable-cors: "true"
+        nginx.ingress.kubernetes.io/proxy-buffer-size: "128k"
+        nginx.ingress.kubernetes.io/proxy-buffering: "on"
+        nginx.ingress.kubernetes.io/proxy-buffers-number: "20"
+        nginx.ingress.kubernetes.io/use-regex: "true"
+      tls: false
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+      requests:
+        cpu: 200m
+        memory: 256Mi
+  realmSeeding:
+    sslRequired: "none"
+    clients:
+      registration:
+        redirects:
+          - http://portal.tx.test/*
+      portal:
+        rootUrl: http://portal.tx.test/home
+        redirects:
+          - http://portal.tx.test/*
+      semantics:
+        redirects:
+          - http://portal.tx.test/*
+      miw:
+        clientSecret: "changeme"
+        redirects:
+          - http://managed-identity-wallets.tx.test/*
+      bpdm:
+        clientSecret: "changeme"
+        redirects:
+          - http://partners-pool.tx.test/*
+      bpdmGate:
+        clientSecret: "changeme"
+        redirects:
+          - http://partners-gate.tx.test/*
+      bpdmOrchestrator:
+        clientSecret: "changeme"
+    serviceAccounts:
+      provisioning:
+        clientSecret: "changeme"
+      saCxOperator:
+        clientSecret: "changeme"
+      saCl1Reg2:
+        clientSecret: "changeme"
+      saCl2Portal:
+        clientSecret: "changeme"
+      saCl3Semantic:
+        clientSecret: "changeme"
+      saCl5Custodian:
+        clientSecret: "changeme"
+      saCl7Cx5:
+        clientSecret: "changeme"
+      saCl8Cx1:
+        clientSecret: "changeme"
+      saCl2O3:
+        clientSecret: "changeme"
+      saCl2O5:
+        clientSecret: "changeme"
+      saCl25Cx1:
+        clientSecret: "changeme"
+    initContainer:
+      image:
+        name: docker.io/tractusx/umbrella-init-container:2.1.0-init
+        pullPolicy: IfNotPresent
+    users:
+      - id: "502dabcf-01c7-47d9-a88e-0be4279097b5"
+        username: "cx-operator@tx.test"
+        enabled: true
+        firstName: "Operator"
+        lastName: "CX Admin"
+        email: "cx-operator@tx.test"
+        attributes:
+          bpn: ["BPNL00000003CRHK"]
+          organisation: ["CX-Operator"]
+        federatedIdentities:
+          - identityProvider: "CX-Operator"
+            userId: "656e8a94-188b-4a3e-9eec-b45d8efd8347"
+            userName: "cx-operator@tx.test"
+    serviceAccounts:
+      clientSecrets:
+        - clientId: "sa-cl1-reg-2"
+          clientSecret: "changeme"
+        - clientId: "sa-cl2-01"
+          clientSecret: "changeme"
+        - clientId: "sa-cl2-02"
+          clientSecret: "changeme"
+        - clientId: "sa-cl2-03"
+          clientSecret: "changeme"
+        - clientId: "sa-cl2-04"
+          clientSecret: "changeme"
+        - clientId: "sa-cl2-05"
+          clientSecret: "changeme"
+        - clientId: "sa-cl3-cx-1"
+          clientSecret: "changeme"
+        - clientId: "sa-cl5-custodian-2"
+          clientSecret: "changeme"
+        - clientId: "sa-cl7-cx-1"
+          clientSecret: "changeme"
+        - clientId: "sa-cl7-cx-5"
+          clientSecret: "changeme"
+        - clientId: "sa-cl7-cx-7"
+          clientSecret: "changeme"
+        - clientId: "sa-cl8-cx-1"
+          clientSecret: "changeme"
+        - clientId: "sa-cl21-01"
+          clientSecret: "changeme"
+        - clientId: "sa-cl22-01"
+          clientSecret: "changeme"
+        - clientId: "sa-cl24-01"
+          clientSecret: "changeme"
+        - clientId: "sa-cl25-cx-1"
+          clientSecret: "changeme"
+        - clientId: "sa-cl25-cx-2"
+          clientSecret: "changeme"
+        - clientId: "sa-cl25-cx-3"
+          clientSecret: "changeme"
+    bpn: "BPNL00000003CRHK"
+    sharedidp: "http://sharedidp.tx.test"
+    extraServiceAccounts:
+      clientSecretsAndBpn:
+        - clientId: satest01
+          clientSecret: UbfW4CR1xH4OskkovqJ2JzcwnQIrG7oj
+          bpn: BPNL00000003AZQP
+        - clientId: satest02
+          clientSecret: pyFUZP2L9UCSVJUScHcN3ZEgy2PGyEpg
+          bpn: BPNL00000003AYRE
+        - clientId: satest03
+          clientSecret: tPwy4exxH1sXBRQouobSA2nNVaaPuwCs
+          bpn: BPNL00000003AVTH
+        - clientId: satest04
+          clientSecret: BxZ3cwYUPJKK7gI4wq7q6Hgoxel6MphF
+          bpn: BPNL00000003AWSS
+        - clientId: satest05
+          clientSecret: dR00GN1AWCYbRGbZY8TXjs2YEPMeCxLF
+          bpn: BPNL00000003B0Q0
+        - clientId: satest06
+          clientSecret: pDSziT0TUFAkMx0qGFcvpE4XkMqPh13v
+          bpn: BPNS0000000008ZZ
+        - clientId: satest07
+          clientSecret: GY5a44sNuNIjrTyjHvdEPLeNRHH0Kt39
+          bpn: BPNL00000003CNKC
+        - clientId: satest08
+          clientSecret: WUXpQx1aIclA7enqtk4o2uvLDLMreUMI
+          bpn: BPNL00000003B6LU
+        - clientId: satest09
+          clientSecret: N08TGNdhUskJcmVEnOh1tAGwr9oca9PU
+          bpn: BPNL00000003CML1
+        - clientId: satest10
+          clientSecret: gzdSG0CBDJrtv1gje0zUASu1S9P4I7xP
+          bpn: BPNS00000008BDFH
+        - clientId: satest11
+          clientSecret: CC3fz3dQGZsBp2NCbowOV65efBFZTgEO
+          bpn: BPNL00000003B2OM
+        - clientId: satest12
+          clientSecret: 2gjSlFxBO7spEM4aTz3f8CqDS0klbt7C
+          bpn: BPNL00000003CSGV
+        - clientId: satest13
+          clientSecret: 3YQzDqEsdUZ83DVHSIRYUCK4pot61r5M
+          bpn: BPNL00000003B5MJ
+        - clientId: satest14
+          clientSecret: 7qtMpfN3otq5dGiEPssVongXK56lb9LE
+          bpn: BPNL00000003AXS3
+        - clientId: satest15
+          clientSecret: 8QiZ8ineW0Lt8ZOlC2MYuCR0TvM6vMYX
+          bpn: BPNL00000003B3NX
+        - clientId: satest16
+          clientSecret: d2sqUurBH9Vd8DNRmjiMfObU67ajorCq
+          bpn: BPNL00000000BJTL
+    initContainer:
+      image:
+        name: docker.io/tractusx/umbrella-init-container:2.1.0-init
+        pullPolicy: IfNotPresent
+
+sharedidp:
+  enabled: true
+  keycloak:
+    nameOverride: "sharedidp"
+    auth:
+      adminPassword: "adminconsolepwsharedidp"
+    postgresql:
+      nameOverride: "sharedidp-postgresql"
+      auth:
+        password: "dbpasswordsharedidp"
+        postgresPassword: "dbpasswordsharedidp"
+      architecture: standalone
+      primary:
+        persistence:
+          enabled: false
+    ingress:
+      enabled: true
+      ingressClassName: "nginx"
+      hostname: "sharedidp.tx.test"
+      annotations:
+        # uncomment the following line for tls
+        # cert-manager.io/cluster-issuer: "my-ca-issuer"
+        nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+        nginx.ingress.kubernetes.io/cors-allow-methods: "PUT, GET, POST, OPTIONS"
+        nginx.ingress.kubernetes.io/cors-allow-origin: "http://sharedidp.tx.test"
+        nginx.ingress.kubernetes.io/enable-cors: "true"
+        nginx.ingress.kubernetes.io/proxy-buffer-size: "128k"
+        nginx.ingress.kubernetes.io/proxy-buffering: "on"
+        nginx.ingress.kubernetes.io/proxy-buffers-number: "20"
+        nginx.ingress.kubernetes.io/use-regex: "true"
+      tls: false
+    # uncomment the following line for tls
+    # initContainers:
+    #   - name: init-certs
+    #     image: docker.io/bitnami/keycloak:25.0.6-debian-12-r0
+    #     imagePullPolicy: IfNotPresent
+    #     command: ["/bin/bash"]
+    #     args:
+    #       - -ec
+    #       - |-
+    #         keytool -import -file "/certs/tls.crt" \
+    #                 -keystore "/opt/bitnami/keycloak/certs/keycloak.truststore.jks" \
+    #                 -storepass "${KEYCLOAK_SPI_TRUSTSTORE_PASSWORD}" \
+    #                 -noprompt
+    #     env:
+    #       - name: KEYCLOAK_SPI_TRUSTSTORE_PASSWORD
+    #         value: "changeit"
+    #     volumeMounts:
+    #       - name: certificates
+    #         mountPath: /certs
+    #       - name: shared-certs
+    #         mountPath: "/opt/bitnami/keycloak/certs"
+    # extraEnvVars:
+    #   - name: KEYCLOAK_SPI_TRUSTSTORE_FILE
+    #     value: "/opt/bitnami/keycloak/certs/keycloak.truststore.jks"
+    #   - name: KEYCLOAK_SPI_TRUSTSTORE_PASSWORD
+    #     value: "changeit"
+    # extraVolumes:
+    #   - name: certificates
+    #     secret:
+    #       secretName: root-secret
+    #       defaultMode: 420
+    #   - name: shared-certs
+    #     emptyDir: {}
+    # extraVolumeMounts:
+    #   - name: certificates
+    #     mountPath: /certs
+    #   - name: shared-certs
+    #     mountPath: "/opt/bitnami/keycloak/certs"
+  realmSeeding:
+    realms:
+      cxOperator:
+        sslRequired: "none"
+        centralidp: "http://centralidp.tx.test"
+        initialUser:
+          username: "cx-operator@tx.test"
+          password: "tractusx-umbr3lla!"
+        mailing:
+          host: "smtp.tx.test"
+          port: "587"
+          username: "smtp-user"
+          password: ""
+          from: "smtp@tx.test"
+          replyTo: "smtp@tx.test"
+      master:
+        serviceAccounts:
+          provisioning:
+            clientSecret: "changeme"
+          saCxOperator:
+            clientSecret: "changeme"
+
+bpndiscovery:
+  enabled: true
+  enablePostgres: true
+  bpndiscovery:
+    host: semantics.tx.test
+    ingress:
+      enabled: true
+      tls: false
+      urlPrefix: "/bpndiscovery"
+      className: "nginx"
+      annotations:
+        cert-manager.io/cluster-issuer: "my-ca-issuer"
+        nginx.ingress.kubernetes.io/rewrite-target: "/$2"
+        nginx.ingress.kubernetes.io/use-regex: "true"
+        nginx.ingress.kubernetes.io/enable-cors: "true"
+        nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+        nginx.ingress.kubernetes.io/x-forwarded-prefix: "/bpndiscovery"
+    authentication: true
+    idp:
+      issuerUri: "http://centralidp.tx.test/auth/realms/CX-Central"
+      publicClientId: "Cl22-CX-BPND"
+    bpndiscoveryEndpoint:
+      allowedTypes: oen,wmi,passtype,manufacturerPartId
+      description: Service to discover BPN for different kind of type numbers
+      endpointAddress: /bpndiscovery
+      documentation: /bpndiscovery/swagger-ui/index.html
+      timeToLive: "31536000"
+    discoveryfinderClient:
+      baseUrl: "semantics.tx.test/discoveryfinder"
+      registration:
+        clientId: sa-cl22-01
+        clientSecret: "client-secret"
+        authorizationGrantType: changeme
+      schedulerCronFrequency: "0 0 */1 * * *"
+      provider:
+        tokenUri: "http://centralidp.tx.test/auth/realms/CX-Central/protocol/openid-connect/token"
+    livenessProbe:
+      initialDelaySeconds: 200
+    readinessProbe:
+      initialDelaySeconds: 200
+  postgresql:
+    nameOverride: "bpndiscovery-postgresql"
+    primary:
+      persistence:
+        enabled: false
+        size: 8Gi
+    auth:
+      password: "dbpasswordbpndiscovery"
+      postgresPassword: "dbpasswordbpndiscovery"
+
+discoveryfinder:
+  enabled: true
+  enablePostgres: true
+  discoveryfinder:
+    authentication: true
+    livenessProbe:
+      initialDelaySeconds: 200
+    readinessProbe:
+      initialDelaySeconds: 200
+    host: semantics.tx.test
+    properties:
+      discoveryfinder:
+        initialEndpoints:
+          - type: bpn
+            endpointAddress: http://portal-backend.tx.test/api/administration/Connectors/discovery
+            description: Service to discover connector endpoints based on bpns
+            documentation: http://portal-backend.tx.test/api/administration/swagger/index.html
+    idp:
+      issuerUri: "http://centralidp.tx.test/auth/realms/CX-Central"
+      publicClientId: "Cl21-CX-DF"
+    dataSource:
+      url: "jdbc:postgresql://{{ .Release.Name }}-discoveryfinder-postgresql:5432/discoveryfinder"
+    ingress:
+      enabled: true
+      tls: false
+      urlPrefix: "/discoveryfinder"
+      className: "nginx"
+      annotations:
+        cert-manager.io/cluster-issuer: "my-ca-issuer"
+        nginx.ingress.kubernetes.io/rewrite-target: "/$2"
+        nginx.ingress.kubernetes.io/use-regex: "true"
+        nginx.ingress.kubernetes.io/enable-cors: "true"
+        nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+        nginx.ingress.kubernetes.io/x-forwarded-prefix: "/discoveryfinder"
+  postgresql:
+    nameOverride: "discoveryfinder-postgresql"
+    primary:
+      persistence:
+        enabled: false
+        size: 8Gi
+    auth:
+      password: "dbpassworddiscoveryfinder"
+      postgresPassword: "dbpassworddiscoveryfinder"
+
+selfdescription:
+  enabled: true
+  sdfactory:
+    replicaCount: 1
+    
+    image:
+      repository: tractusx/sdfactory
+      tag: "2.1.23"
+      pullPolicy: IfNotPresent
+    
+    service:
+      type: ClusterIP
+      port: 8080
+      targetPort: 8080
+    
+    secret:
+      # -- JWK Set URI
+      jwkSetUri: "http://centralidp.tx.test/auth/realms/CX-Central/protocol/openid-connect/certs"
+      # -- Details for Clearing House URI
+      clearingHouseUri: ""
+      # -- Details for Clearing House URL
+      clearingHouseServerUrl: ""
+      # -- Details for Clearing House Realm
+      clearingHouseRealm: ""
+      # -- Details for Clearing House Client ID
+      clearingHouseClientId: ""
+      # -- Details for Clearing House Client Secret
+      clearingHouseClientSecret: ""
+      # -- Details for Verifying Client uri
+      verifycredentialsUri: ""
+    
+    ingress:
+      enabled: true
+      hosts:
+        - host: "sdfactory.tx.test"
+          paths:
+            - path: "/"
+              pathType: "Prefix"
+      # uncomment the following lines for tls
+      # tls:
+      # - tlsName: sdfactory.tx.test-tls
+      #   hosts:
+      #     - sdfactory.tx.test.net
+      className: "nginx"
+      # annotations:
+      #   # uncomment the following line for tls
+      #   cert-manager.io/cluster-issuer: "my-ca-issuer"
+    
+    resources:
+      limits:
+        cpu: 500m
+        memory: 384Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+    
+    # Environment variables to resolve placeholders
+    env:
+      SPRING_PROFILES_ACTIVE: "tagus-ctx"
+      SERVER_PORT: "8080"
+      KEYCLOAK_CLIENT_ID: "sa-cl8-cx-1"
+      JWT_SET_URI: "http://centralidp.tx.test/auth/realms/CX-Central/protocol/openid-connect/certs"
+      SCHEMA_2210_URL: "https://w3id.org/gaia-x/trust-framework/v22.10/schemas/SD-document.jsonld"
+      CATENA_X_NS: "https://catena-x.net/selfdescription#"
+      CLEARING_HOUSE_URI: ""
+      CLEARING_HOUSE_SERVER_URL: ""
+      CLEARING_HOUSE_REALM: ""
+      CLEARING_HOUSE_CLIENT_ID: ""
+      CLEARING_HOUSE_CLIENT_SECRET: ""
+      CUSTODIAN_WALLET_URI: ""
+      CUSTODIAN_WALLET_AUTH_SERVER_URL: ""
+      CUSTODIAN_WALLET_REALM: ""
+      CUSTODIAN_WALLET_CLIENT_ID: ""
+      CUSTODIAN_WALLET_CLIENT_SECRET: ""
+    
+    # ConfigMap for application configuration
+    configMap:
+      enabled: true
+      data:
+        application.yml: |
+          server:
+            port: 8080
+            error:
+              include-message: always
+          
+          keycloak:
+            resource:
+              clientid: "${KEYCLOAK_CLIENT_ID}"
+          
+          spring:
+            jackson:
+              default-property-inclusion: non_null
+            profiles:
+              active: tagus-ctx
+            security:
+              oauth2:
+                resourceserver:
+                  jwt:
+                    jwk-set-uri: "${JWT_SET_URI}"
+          
+          springdoc:
+            api-docs:
+              enabled: true
+            swagger-ui:
+              url: /SDFactoryApi-Tagus.yml
+          
+          app:
+            build:
+              version: "2.1.23"
+            verifiableCredentials:
+              durationDays: 90
+              schema2210Url: "${SCHEMA_2210_URL}"
+              catena-x-ns: "${CATENA_X_NS}"
+            usersDetails:
+            clearingHouse:
+              uri: "${CLEARING_HOUSE_URI}"
+              serverUrl: "${CLEARING_HOUSE_SERVER_URL}"
+              realm: "${CLEARING_HOUSE_REALM}"
+              clientId: "${CLEARING_HOUSE_CLIENT_ID}"
+              clientSecret: "${CLEARING_HOUSE_CLIENT_SECRET}"
+            custodianWallet:
+              uri: "${CUSTODIAN_WALLET_URI}"
+              authServerUrl: "${CUSTODIAN_WALLET_AUTH_SERVER_URL}"
+              realm: "${CUSTODIAN_WALLET_REALM}"
+              clientId: "${CUSTODIAN_WALLET_CLIENT_ID}"
+              clientSecret: "${CUSTODIAN_WALLET_CLIENT_SECRET}"
+            security:
+              createRole: add_self_descriptions
+    
+    # Secrets configuration
+    secret:
+      jwkSetUri: "http://centralidp.tx.test/auth/realms/CX-Central/protocol/openid-connect/certs"
+      clearingHouseUri: ""
+      clearingHouseServerUrl: ""
+      clearingHouseRealm: ""
+      clearingHouseClientId: ""
+      clearingHouseClientSecret: ""
+      verifycredentialsUri: ""
+
+ssi-credential-issuer:
+  enabled: true
+  replicaCount: 1
+  portalBackendAddress: "http://portal-backend.tx.test"
+  walletAddress: "http://ssi-dim-wallet-stub.tx.test"
+  walletTokenAddress: "http://ssi-dim-wallet-stub.tx.test/oauth/token"
+  service:
+    swaggerEnabled: true
+    logging:
+      businessLogic: "Debug"
+      default: "Debug"
+    portal:
+      # -- Provide portal client-id from CX IAM centralidp.
+      # You must specify the technical user with the required roles for the interaction with the portal
+      clientId: "sa-cl24-01"
+      # -- Client-secret for portal client-id. Secret-key 'portal-client-secret'.
+      clientSecret: "changeme"
+    credential:
+      issuerDid: "did:web:ssi-dim-wallet-stub.tx.test:BPNL00000003CRHK"
+      issuerBpn: "BPNL00000003CRHK"
+      statusListUrl: "http://ssi-dim-wallet-stub.tx.test/status-list/BPNL00000003CRHK/8a6c7486-1e1f-4555-bdd2-1a178182651e"
+      encryptionConfigIndex: 0
+      encryptionConfigs:
+        index0:
+          # EncryptionKey for wallet. Secret-key 'credential-encryption-key0'. Expected format is 256 bit (64 digits) hex.
+          encryptionKey: "deb8261ec7b89c344f1c5ef5a11606e305f14e0d231b1357d90ad0180c5081d3"
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+      requests:
+        cpu: 200m
+        memory: 256Mi
+  processesworker:
+    portal:
+      # -- Provide portal client-id from CX IAM centralidp.
+      # You must specify the technical user with the required roles for the interaction with the portal
+      clientId: "sa-cl24-01"
+      # -- Client-secret for portal client-id. Secret-key 'portal-client-secret'.
+      clientSecret: "changeme"
+    logging:
+      default: "Debug"
+    wallet:
+      # -- Provide wallet client-id from CX IAM centralidp.
+      # You must specify the technical user with the required roles for the interaction with the managed-identity-wallet
+      clientId: "wallet-client-id"
+      # -- Client-secret for wallet client-id. Secret-key 'wallet-client-secret'.
+      clientSecret: ""
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+      requests:
+        cpu: 200m
+        memory: 256Mi
+  migrations:
+    logging:
+      default: "Debug"
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+  credentialExpiry:
+    logging:
+      default: "Debug"
+    resources:
+      limits:
+        cpu: 500m
+        memory: 512Mi
+      requests:
+        cpu: 100m
+        memory: 128Mi
+  postgresql:
+    enabled: true
+    nameOverride: issuer-postgresql
+    architecture: standalone
+    primary:
+      persistence:
+        enabled: false
+      resources:
+        limits:
+          cpu: 1000m
+          memory: 1Gi
+        requests:
+          cpu: 200m
+          memory: 256Mi
+    auth:
+      # -- Password for the root username 'postgres'. Secret-key 'postgres-password'.
+      postgrespassword: "dbpasswordissuer"
+      # -- Password for the non-root username 'issuer'. Secret-key 'password'.
+      password: "dbpasswordissuer"
+  centralidp:
+    # -- Provide centralidp base address (CX IAM), without trailing '/auth'.
+    address: "http://centralidp.tx.test"
+    jwtBearerOptions:
+      requireHttpsMetadata: "false"
+  ingress:
+    enabled: true
+    className: "nginx"
+    annotations:
+      nginx.ingress.kubernetes.io/use-regex: "true"
+      nginx.ingress.kubernetes.io/enable-cors: "true"
+      nginx.ingress.kubernetes.io/proxy-body-size: "8m"
+      nginx.ingress.kubernetes.io/cors-allow-origin: "http://*.tx.test"
+    # -- Ingress TLS configuration
+    tls: []
+      # - secretName: ""
+      #   hosts:
+      #     - ""
+    hosts:
+      - host: "ssi-credential-issuer.tx.test"
+        paths:
+          - path: "/"
+            pathType: "Prefix"
+            backend:
+              port: 8080
+
+dataconsumerOne:
+  enabled: true
+  seedTestdata: true
+  nameOverride: dataconsumer-1
+  secrets:
+    edc-wallet-secret: changeme
+  tractusx-connector:
+    nameOverride: dataconsumer-1-edc
+    participant:
+      id: BPNL00000003AZQP
+    iatp:
+      id: did:web:ssi-dim-wallet-stub.tx.test:BPNL00000003AZQP
+      trustedIssuers:
+        - did:web:ssi-dim-wallet-stub.tx.test:BPNL00000003CRHK
+      sts:
+        dim:
+          url: http://ssi-dim-wallet-stub.tx.test/api/sts
+        oauth:
+          token_url: http://ssi-dim-wallet-stub.tx.test/oauth/token
+          client:
+            id: BPNL00000003AZQP
+            secret_alias: edc-wallet-secret
+    controlplane:
+      env:
+        TX_IAM_IATP_CREDENTIALSERVICE_URL: http://ssi-dim-wallet-stub.tx.test/api
+        EDC_IAM_DID_WEB_USE_HTTPS: false
+      bdrs:
+        server:
+          url: http://bdrs-server:8081/api/v1/directory
+      endpoints:
+        management:
+          authKey: TEST1
+      ingresses:
+        - enabled: true
+          hostname: "dataconsumer-1-controlplane.tx.test"
+          endpoints:
+            - default
+            - protocol
+            - management
+          className: "nginx"
+          tls:
+            enabled: false
+      resources:
+        limits:
+          cpu: 2000m
+          memory: 2Gi
+        requests:
+          cpu: 500m
+          memory: 512Mi
+    dataplane:
+      env:
+        TX_IAM_IATP_CREDENTIALSERVICE_URL: http://ssi-dim-wallet-stub.tx.test/api
+        EDC_IAM_DID_WEB_USE_HTTPS: false
+      ingresses:
+        - enabled: true
+          hostname: "dataconsumer-1-dataplane.tx.test"
+          endpoints:
+            - default
+            - public
+          className: "nginx"
+          tls:
+            enabled: false
+      token:
+        signer:
+          privatekey_alias: tokenSignerPrivateKey
+        verifier:
+          publickey_alias: tokenSignerPublicKey
+      resources:
+        limits:
+          cpu: 2000m
+          memory: 2Gi
+        requests:
+          cpu: 500m
+          memory: 512Mi
+    postgresql:
+      nameOverride: dataconsumer-1-db
+      jdbcUrl: "jdbc:postgresql://{{ .Release.Name }}-dataconsumer-1-db:5432/edc"
+      auth:
+        password: "dbpassworddataconsumerone"
+        postgresPassword: "dbpassworddataconsumerone"
+      resources:
+        limits:
+          cpu: 1000m
+          memory: 1Gi
+        requests:
+          cpu: 200m
+          memory: 256Mi
+    # External Vault Configuration - Use existing Vault
+    vault:
+      hashicorp:
+        enabled: true
+        url: http://vault.tx.test
+        tokenSecretName: vault-edc-token
+        tokenSecretKey: token
+        healthCheck:
+          enabled: true
+          standbyOk: true
+        paths:
+          secret: "/v1/secret"
+          health: "/v1/sys/health"
+        timeout: 30
+
+  # Disable internal Vault installation
+  vault:
+    enabled: false
+
+  digital-twin-registry:
+    enabled: false
+
+  simple-data-backend:
+    enabled: false
+
+semantic-hub:
+  enabled: true
+  enableKeycloak: false
+  keycloak:
+    postgresql:
+      architecture: standalone
+      primary:
+        persistence:
+          enabled: false
+  hub:
+    authentication: false
+    livenessProbe:
+      initialDelaySeconds: 200
+    readinessProbe:
+      initialDelaySeconds: 200
+    host: semantics.tx.test
+    ingress:
+      enabled: true
+      tls: false
+      urlPrefix: "/hub"
+      className: "nginx"
+      annotations:
+        cert-manager.io/cluster-issuer: "my-ca-issuer"
+        nginx.ingress.kubernetes.io/rewrite-target: "/$2"
+        nginx.ingress.kubernetes.io/use-regex: "true"
+        nginx.ingress.kubernetes.io/enable-cors: "true"
+        nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+        nginx.ingress.kubernetes.io/x-forwarded-prefix: "/hub"
+  graphdb:
+    enabled: true
+    image: stain/jena-fuseki:5.0.0
+    imagePullPolicy: IfNotPresent
+    storageClassName: "standard"
+    storageSize: 8Gi
+    securityContext:
+      runAsUser: 0
+      runAsGroup: 0
+      fsGroup: 0
+      allowPrivilegeEscalation: false
+      readOnlyRootFilesystem: false
+
+dataconsumerTwo:
+  enabled: true
+  seedTestdata: true
+  nameOverride: dataconsumer-2
+  secrets:
+    edc-wallet-secret: changeme
+  tractusx-connector:
+    nameOverride: dataconsumer-2-edc
+    participant:
+      id: BPNL00000003AVTH
+    iatp:
+      id: did:web:ssi-dim-wallet-stub.tx.test:BPNL00000003AVTH
+      trustedIssuers:
+        - did:web:ssi-dim-wallet-stub.tx.test:BPNL00000003CRHK
+      sts:
+        dim:
+          url: http://ssi-dim-wallet-stub.tx.test/api/sts
+        oauth:
+          token_url: http://ssi-dim-wallet-stub.tx.test/oauth/token
+          client:
+            id: BPNL00000003AVTH
+            secret_alias: edc-wallet-secret
+    controlplane:
+      env:
+        TX_IAM_IATP_CREDENTIALSERVICE_URL: http://ssi-dim-wallet-stub.tx.test/api
+        EDC_IAM_DID_WEB_USE_HTTPS: false
+      bdrs:
+        server:
+          url: http://bdrs-server:8081/api/v1/directory
+      endpoints:
+        management:
+          authKey: TEST3
+      ingresses:
+        - enabled: true
+          hostname: "dataconsumer-2-controlplane.tx.test"
+          endpoints:
+            - default
+            - protocol
+            - management
+          className: "nginx"
+          tls:
+            enabled: false
+      resources:
+        limits:
+          cpu: 2000m
+          memory: 2Gi
+        requests:
+          cpu: 500m
+          memory: 512Mi
+    dataplane:
+      env:
+        TX_IAM_IATP_CREDENTIALSERVICE_URL: http://ssi-dim-wallet-stub.tx.test/api
+        EDC_IAM_DID_WEB_USE_HTTPS: false
+      ingresses:
+        - enabled: true
+          hostname: "dataconsumer-2-dataplane.tx.test"
+          endpoints:
+            - default
+            - public
+          className: "nginx"
+          tls:
+            enabled: false
+      token:
+        signer:
+          privatekey_alias: tokenSignerPrivateKey
+        verifier:
+          publickey_alias: tokenSignerPublicKey
+      resources:
+        limits:
+          cpu: 2000m
+          memory: 2Gi
+        requests:
+          cpu: 500m
+          memory: 512Mi
+    postgresql:
+      nameOverride: dataconsumer-2-db
+      jdbcUrl: "jdbc:postgresql://{{ .Release.Name }}-dataconsumer-2-db:5432/edc"
+      auth:
+        password: "dbpassworddataconsumertwo"
+        postgresPassword: "dbpassworddataconsumertwo"
+      resources:
+        limits:
+          cpu: 1000m
+          memory: 1Gi
+        requests:
+          cpu: 200m
+          memory: 256Mi
+    # External Vault Configuration - Use existing Vault
+    vault:
+      hashicorp:
+        enabled: true
+        url: http://vault.tx.test
+        tokenSecretName: vault-edc-token
+        tokenSecretKey: token
+        healthCheck:
+          enabled: true
+          standbyOk: true
+        paths:
+          secret: "/v1/secret"
+          health: "/v1/sys/health"
+        timeout: 30
+
+  # Disable internal Vault installation
+  vault:
+    enabled: false
+
+  digital-twin-registry:
+    enabled: false
+
+  simple-data-backend:
+    enabled: false
+
+bdrs-server-memory:
+  nameOverride: bdrs-server
+  fullnameOverride: bdrs-server
+  enabled: true
+  seeding:
+    url: "http://bdrs-server:8081"
+    enabled: true
+    bpnList:
+      - bpn: "BPNL00000003CRHK"
+        did: "did:web:ssi-dim-wallet-stub.tx.test:BPNL00000003CRHK"
+      - bpn: "BPNL00000003B3NX"
+        did: "did:web:ssi-dim-wallet-stub.tx.test:BPNL00000003B3NX"
+      - bpn: "BPNL00000003CSGV"
+        did: "did:web:ssi-dim-wallet-stub.tx.test:BPNL00000003CSGV"
+      - bpn: "BPNL00000003B6LU"
+        did: "did:web:ssi-dim-wallet-stub.tx.test:BPNL00000003B6LU"
+      - bpn: "BPNL00000003AXS3"
+        did: "did:web:ssi-dim-wallet-stub.tx.test:BPNL00000003AXS3"
+      - bpn: "BPNL00000003AZQP"
+        did: "did:web:ssi-dim-wallet-stub.tx.test:BPNL00000003AZQP"
+      - bpn: "BPNL00000003AWSS"
+        did: "did:web:ssi-dim-wallet-stub.tx.test:BPNL00000003AWSS"
+      - bpn: "BPNL00000003AYRE"
+        did: "did:web:ssi-dim-wallet-stub.tx.test:BPNL00000003AYRE"
+      - bpn: "BPNL00000003AVTH"
+        did: "did:web:ssi-dim-wallet-stub.tx.test:BPNL00000003AVTH"
+      - bpn: "BPNL00000000BJTL"
+        did: "did:web:ssi-dim-wallet-stub.tx.test:BPNL00000000BJTL"
+      - bpn: "BPNL00000003CML1"
+        did: "did:web:ssi-dim-wallet-stub.tx.test:BPNL00000003CML1"
+      - bpn: "BPNL00000003B2OM"
+        did: "did:web:ssi-dim-wallet-stub.tx.test:BPNL00000003B2OM"
+      - bpn: "BPNL00000003B0Q0"
+        did: "did:web:ssi-dim-wallet-stub.tx.test:BPNL00000003B0Q0"
+      - bpn: "BPNL00000003B5MJ"
+        did: "did:web:ssi-dim-wallet-stub.tx.test:BPNL00000003B5MJ"
+      - bpn: "BPNS0000000008ZZ"
+        did: "did:web:ssi-dim-wallet-stub.tx.test:BPNS0000000008ZZ"
+      - bpn: "BPNL00000003CNKC"
+        did: "did:web:ssi-dim-wallet-stub.tx.test:BPNL00000003CNKC"
+      - bpn: "BPNS00000008BDFH"
+        did: "did:web:ssi-dim-wallet-stub.tx.test:BPNS00000008BDFH"
+
+  server:
+    trustedIssuers:
+      - did:web:ssi-dim-wallet-stub.tx.test:BPNL00000003CRHK
+    env:
+      EDC_IAM_DID_WEB_USE_HTTPS: false
+    endpoints:
+      management:
+        authKey: TEST
+    ingresses:
+      - enabled: true
+        hostname: bdrs-server.tx.test
+        endpoints:
+          - directory
+          - management
+        className: "nginx"
+        tls:
+          enabled: false
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+      requests:
+        cpu: 200m
+        memory: 256Mi
+
+bpdm:
+  enabled: true
+  postgres:
+    fullnameOverride: &bpdmPostgresName "bpdm-postgres"
+    nameOverride:
+    auth:
+      password: &bpdmPostgresPassword "dbpasswordbpdm"
+      postgresPassword: *bpdmPostgresPassword
+    architecture: standalone
+    primary:
+      persistence:
+        enabled: false
+      resources:
+        limits:
+          cpu: 1000m
+          memory: 1Gi
+        requests:
+          cpu: 200m
+          memory: 256Mi
+  centralidp:
+    enabled: false
+  bpdm-gate:
+    postgres:
+      fullnameOverride:
+      nameOverride: bpdm-postgres
+    ingress:
+      enabled: true
+      annotations:
+        nginx.ingress.kubernetes.io/rewrite-target: "/$2"
+        nginx.ingress.kubernetes.io/use-regex: "true"
+        nginx.ingress.kubernetes.io/x-forwarded-prefix: "/gate"
+      hosts:
+        - host: "business-partners.tx.test"
+          paths:
+            - path: "/gate(/|$)(.*)"
+              pathType: "ImplementationSpecific"
+    applicationConfig:
+      server:
+        forward-headers-strategy: "FRAMEWORK"
+      bpdm:
+        datasource:
+          host: *bpdmPostgresName
+        bpn:
+          owner-bpn-l:
+        security:
+          auth-server-url: "http://centralidp.tx.test/auth"
+          realm: "CX-Central"
+          client-id: "Cl16-CX-BPDMGate"
+        client:
+          pool:
+            base-url: http://business-partners.tx.test/pool
+            registration:
+              client-id: "sa-cl7-cx-1"
+          orchestrator:
+            base-url: http://business-partners.tx.test/orchestrator
+            registration:
+              client-id: "sa-cl25-cx-3"
+    applicationSecrets:
+      spring:
+        datasource:
+          password: *bpdmPostgresPassword
+      bpdm:
+        client:
+          orchestrator:
+            registration:
+              client-secret: "changeme"
+          pool:
+            registration:
+              client-secret: "changeme"
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+      requests:
+        cpu: 200m
+        memory: 256Mi
+  bpdm-pool:
+    postgres:
+      fullnameOverride:
+      nameOverride: bpdm-postgres
+    ingress:
+      enabled: true
+      annotations:
+        nginx.ingress.kubernetes.io/rewrite-target: "/$2"
+        nginx.ingress.kubernetes.io/use-regex: "true"
+        nginx.ingress.kubernetes.io/x-forwarded-prefix: "/pool"
+      hosts:
+        - host: "business-partners.tx.test"
+          paths:
+            - path: "/pool(/|$)(.*)"
+              pathType: "ImplementationSpecific"
+    applicationConfig:
+      server:
+        forward-headers-strategy: "FRAMEWORK"
+      bpdm:
+        datasource:
+          host: *bpdmPostgresName
+        security:
+          auth-server-url: "http://centralidp.tx.test/auth"
+          realm: "CX-Central"
+          client-id: "Cl7-CX-BPDM"
+        client:
+          orchestrator:
+            base-url: http://business-partners.tx.test/orchestrator
+            registration:
+              client-id: "sa-cl25-cx-2"
+    applicationSecrets:
+      bpdm:
+        client:
+          orchestrator:
+            registration:
+              client-secret: "changeme"
+      spring:
+        datasource:
+          password: *bpdmPostgresPassword
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+      requests:
+        cpu: 200m
+        memory: 256Mi
+  bpdm-orchestrator:
+    ingress:
+      enabled: true
+      annotations:
+        nginx.ingress.kubernetes.io/rewrite-target: "/$2"
+        nginx.ingress.kubernetes.io/use-regex: "true"
+        nginx.ingress.kubernetes.io/x-forwarded-prefix: "/orchestrator"
+      hosts:
+        - host: "business-partners.tx.test"
+          paths:
+            - path: "/orchestrator(/|$)(.*)"
+              pathType: "ImplementationSpecific"
+    postgres:
+      enabled: false
+      fullnameOverride: bpdm-postgres
+    applicationConfig:
+      server:
+        forward-headers-strategy: "FRAMEWORK"
+      bpdm:
+        datasource:
+          host: *bpdmPostgresName
+        security:
+          auth-server-url: "http://centralidp.tx.test/auth"
+          realm: "CX-Central"
+          client-id: "Cl25-CX-BPDM-Orchestrator"
+    applicationSecrets:
+      spring:
+        datasource:
+          password: *bpdmPostgresPassword
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+      requests:
+        cpu: 200m
+        memory: 256Mi
+  bpdm-cleaning-service-dummy:
+    applicationConfig:
+      bpdm:
+        client:
+          orchestrator:
+            base-url: http://business-partners.tx.test/orchestrator
+            provider:
+              issuer-uri: "http://centralidp.tx.test/auth/realms/CX-Central"
+            registration:
+              client-id: "sa-cl25-cx-1"
+    applicationSecrets:
+      bpdm:
+        client:
+          orchestrator:
+            registration:
+              client-secret: "changeme"
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+      requests:
+        cpu: 200m
+        memory: 256Mi
+
+ssi-dim-wallet-stub:
+  enabled: true
+  wallet:
+    replicaCount: 1
+    host: ssi-dim-wallet-stub.tx.test
+    nameSpace: "umbrella"
+    appName: "ssi-dim-wallet-stub"
+    configName: "ssi-dim-wallet-config"
+    serviceName: "ssi-dim-wallet-service"
+    secretName: "ssi-dim-wallet-secret"
+    ingressName: "ssi-dim-wallet-ingress"
+    seeding:
+      bpnList: "BPNL00000003AZQP,BPNL00000003AYRE"
+    ingress:
+      enabled: true
+      tls:
+        enabled: false
+        name: ""
+      urlPrefix: /
+      className: nginx
+      annotations: {}
+    swagger:
+      ui:
+        status: true
+      apiDoc:
+        status: true
+    logLevel: "debug"
+    environment: "default"
+    baseWalletBpn: "BPNL00000003CRHK"
+    didHost: "ssi-dim-wallet-stub.tx.test"
+    stubUrl: "http://ssi-dim-wallet-stub.tx.test"
+    statusListVcId: "8a6c7486-1e1f-4555-bdd2-1a178182651e"
+    tokenExpiryTime: "5"
+    portal:
+      waitTime: "60"
+      host: "http://portal-backend.tx.test"
+      clientId: "sa-cl2-05"
+      clientSecret: "changeme"
+    keycloak:
+      realm: "CX-Central"
+      authServerUrl: "http://centralidp.tx.test/auth"
+    service:
+      type: ClusterIP
+      port: 8080
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+      requests:
+        cpu: 200m
+        memory: 256Mi
+  keycloak:
+    enabled: false
+
+# Enable only tx-data-provider
+tx-data-provider:
+  enabled: true
+  seedTestdata: true
+  backendUrl: http://{{ .Release.Name }}-dataprovider-submodelserver:8080
+  registryUrl: http://{{ .Release.Name }}-dataprovider-dtr:8080/api/v3
+  controlplanePublicUrl: http://{{ .Release.Name }}-dataprovider-edc-controlplane:8084
+  controlplaneManagementUrl: http://{{ .Release.Name }}-dataprovider-edc-controlplane:8081
+  dataplaneUrl: http://{{ .Release.Name }}-dataprovider-edc-dataplane:8081
+  nameOverride: dataprovider
+  secrets:
+    edc-wallet-secret: changeme
+  
+  # Service account with Vault access
+  serviceAccount:
+    create: true
+    name: edc-vault-reader
+    
+  tractusx-connector:
+    nameOverride: dataprovider-edc
+    # Disable internal Vault installation
+    install:
+      postgresql: true
+      vault: false
+    participant:
+      id: BPNL00000003CRHK
+    iatp:
+      id: did:web:ssi-dim-wallet-stub.tx.test:BPNL00000003CRHK
+      trustedIssuers:
+        - did:web:ssi-dim-wallet-stub.tx.test:BPNL00000003CRHK
+      sts:
+        dim:
+          url: http://ssi-dim-wallet-stub.tx.test/api/sts
+        oauth:
+          token_url: http://ssi-dim-wallet-stub.tx.test/oauth/token
+          client:
+            id: BPNL00000003CRHK
+            secret_alias: edc-wallet-secret
+    controlplane:
+      env:
+        TX_IAM_IATP_CREDENTIALSERVICE_URL: http://ssi-dim-wallet-stub.tx.test/api
+        EDC_IAM_DID_WEB_USE_HTTPS: false
+      bdrs:
+        server:
+          url: http://bdrs-server:8081/api/v1/directory
+      endpoints:
+        management:
+          authKey: TEST2
+      ingresses:
+        - enabled: true
+          hostname: "dataprovider-controlplane.tx.test"
+          endpoints:
+            - default
+            - protocol
+            - management
+          className: "nginx"
+          tls:
+            enabled: false
+      resources:
+        limits:
+          cpu: 2000m
+          memory: 2Gi
+        requests:
+          cpu: 500m
+          memory: 512Mi
+    dataplane:
+      env:
+        TX_IAM_IATP_CREDENTIALSERVICE_URL: http://ssi-dim-wallet-stub.tx.test/api
+        EDC_IAM_DID_WEB_USE_HTTPS: false
+        EDC_TRANSFER_PROXY_TOKEN_VERIFIER_PUBLICKEY_ALIAS: tokenSignerPublicKey
+        EDC_TRANSFER_PROXY_TOKEN_SIGNER_PRIVATEKEY_ALIAS: tokenSignerPrivateKey
+      ingresses:
+        - enabled: true
+          hostname: "dataprovider-dataplane.tx.test"
+          endpoints:
+            - default
+            - public
+          className: "nginx"
+          tls:
+            enabled: false
+      token:
+        signer:
+          privatekey_alias: tokenSignerPrivateKey
+        verifier:
+          publickey_alias: tokenSignerPublicKey
+      resources:
+        limits:
+          cpu: 2000m
+          memory: 2Gi
+        requests:
+          cpu: 500m
+          memory: 512Mi
+    postgresql:
+      nameOverride: dataprovider-db
+      jdbcUrl: "jdbc:postgresql://{{ .Release.Name }}-dataprovider-db:5432/edc"
+      auth:
+        password: "dbpasswordtxdataprovider"
+        postgresPassword: "dbpasswordtxdataprovider"
+      resources:
+        limits:
+          cpu: 1000m
+          memory: 1Gi
+        requests:
+          cpu: 200m
+          memory: 256Mi
+    
+    # External Vault Configuration - Use secret reference for token
+    vault:
+      hashicorp:
+        enabled: true
+        url: http://vault.tx.test
+        tokenSecretName: vault-edc-token
+        tokenSecretKey: token
+        healthCheck:
+          enabled: true
+          standbyOk: true
+        paths:
+          secret: "/v1/secret"
+          health: "/v1/sys/health"
+        timeout: 30
+
+  # Disable internal Vault installation
+  vault:
+    enabled: false  # Using external vault
+
+  digital-twin-registry:
+    nameOverride: dataprovider-dtr
+    postgresql:
+      nameOverride: dataprovider-dtr-db
+      auth:
+        password: "dbpassworddtrdataprovider"
+        # existingSecret: dataprovider-secret-dtr-postgres-init  # Commented out - this secret doesn't exist
+      resources:
+        limits:
+          cpu: 1000m
+          memory: 1Gi
+        requests:
+          cpu: 200m
+          memory: 256Mi
+    registry:
+      host: dataprovider-dtr.test
+      resources:
+        limits:
+          cpu: 1000m
+          memory: 1Gi
+        requests:
+          cpu: 200m
+          memory: 256Mi
+
+  simple-data-backend:
+    nameOverride: dataprovider-submodelserver
+    ingress:
+      enabled: true
+      className: "nginx"
+      hosts:
+        - host: "dataprovider-submodelserver.tx.test"
+          paths:
+            - path: "/"
+              pathType: "Prefix"
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+      requests:
+        cpu: 200m
+        memory: 256Mi
+
+# Disable observability components
+grafana:
+  enabled: false
+loki:
+  enabled: false
+opentelemetry-collector:
+  enabled: false
+prometheus:
+  enabled: false
+jaeger:
+  enabled: false
+
+# Disable auxiliary components
+pgadmin4:
+  enabled: false
+
+smtp4dev:
+  enabled: false
