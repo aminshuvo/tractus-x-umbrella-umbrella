@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "eclipse-edc.fullname" . }}-dataplane
+  labels:
+    {{- include "eclipse-edc.labels" . | nindent 4 }}
+    component: dataplane
+spec:
+  type: ClusterIP
+  ports:
+  - name: default
+    port: {{ .Values.dataplane.ports.default }}
+    targetPort: default
+    protocol: TCP
+  - name: data
+    port: {{ .Values.dataplane.ports.data }}
+    targetPort: data
+    protocol: TCP
+  - name: management
+    port: {{ .Values.dataplane.ports.management }}
+    targetPort: management
+    protocol: TCP
+  - name: public
+    port: {{ .Values.dataplane.ports.public }}
+    targetPort: public
+    protocol: TCP
+  - name: proxy
+    port: {{ .Values.dataplane.ports.proxy }}
+    targetPort: proxy
+    protocol: TCP
+  - name: metrics
+    port: {{ .Values.dataplane.ports.metrics }}
+    targetPort: metrics
+    protocol: TCP
+  selector:
+    {{- include "eclipse-edc.selectorLabels" . | nindent 4 }}
+    component: dataplane 

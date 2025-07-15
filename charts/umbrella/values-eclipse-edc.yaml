@@ -1,0 +1,764 @@
+# Eclipse EDC values for umbrella deployment
+# Replaces tx-data-provider with Eclipse EDC built from source
+
+# Disable all components except eclipse-edc
+portal:
+  enabled: true
+  replicaCount: 1
+  postgresql:
+    nameOverride: "portal-backend-postgresql"
+    architecture: standalone
+    auth:
+      password: "dbpasswordportal"
+      portalPassword: "dbpasswordportal"
+      replicationPassword: "dbpasswordportal"
+      provisioningPassword: "dbpasswordportal"
+    primary:
+      persistence:
+        enabled: false
+  portalAddress: "http://portal.tx.test"
+  portalBackendAddress: "http://portal-backend.tx.test"
+  centralidp:
+    address: "http://centralidp.tx.test"
+  sharedidpAddress: "http://sharedidp.tx.test"
+  semanticsAddress: "http://semantics.tx.test"
+  bpdm:
+    poolAddress: "http://business-partners.tx.test"
+    poolApiPath: "/pool/v6"
+    portalGateAddress: "http://business-partners.tx.test"
+    portalGateApiPath: "/gate/v6"
+  custodianAddress: "http://ssi-dim-wallet-stub.tx.test"
+  dimWrapper:
+    baseAddress: "http://ssi-dim-wallet-stub.tx.test"
+    apiPath: "/api/dim"
+    tokenAddress: "http://ssi-dim-wallet-stub.tx.test/oauth/token"
+  decentralIdentityManagementAuthAddress: "http://ssi-dim-wallet-stub.tx.test/api/sts"
+  sdfactoryAddress: "http://sdfactory.tx.test"
+  clearinghouseAddress: "http://validation.tx.test"
+  clearinghouseTokenAddress: "http://someiam.tx.test/realms/example/protocol/openid-connect/token"
+  issuerComponentAddress: "http://ssi-credential-issuer.tx.test"
+  frontend:
+    ingress:
+      enabled: true
+      annotations:
+        nginx.ingress.kubernetes.io/rewrite-target: "/$1"
+        nginx.ingress.kubernetes.io/use-regex: "true"
+        nginx.ingress.kubernetes.io/enable-cors: "true"
+        nginx.ingress.kubernetes.io/cors-allow-origin: "http://*.tx.test"
+      hosts:
+        - host: "portal.tx.test"
+          paths:
+            - path: "/(.*)"
+              pathType: "ImplementationSpecific"
+              backend:
+                service: "portal"
+                port: 8080
+            - path: "/registration/(.*)"
+              pathType: "ImplementationSpecific"
+              backend:
+                service: "registration"
+                port: 8080
+            - path: "/((assets|documentation)/.*)"
+              pathType: "ImplementationSpecific"
+              backend:
+                service: "assets"
+                port: 8080
+  backend:
+    dotnetEnvironment: "Development"
+    useDimWallet: true
+    keycloak:
+      central:
+        clientId: "sa-cl1-reg-2"
+        clientSecret: "changeme"
+        jwtBearerOptions:
+          requireHttpsMetadata: "false"
+      shared:
+        clientId: "sa-cl1-reg-1"
+        clientSecret: "changeme"
+    registration:
+      logging:
+        default: "Debug"
+        bpdmLibrary: "Debug"
+        registrationService: "Debug"
+      swaggerEnabled: true
+    administration:
+      logging:
+        default: "Debug"
+        businessLogic: "Debug"
+        sdfactoryLibrary: "Debug"
+        bpdmLibrary: "Debug"
+        custodianLibrary: "Debug"
+      serviceAccount:
+        encryptionConfigs:
+          index0:
+            encryptionKey: "deb8261ec7b89c344f1c5ef5a11606e305f14e0d231b1357d90ad0180c5081d3"
+      issuerdid: "did:web:ssi-dim-wallet-stub.tx.test:BPNL00000003CRHK"
+      swaggerEnabled: true
+    appmarketplace:
+      logging:
+        default: "Debug"
+        offersLibrary: "Debug"
+      swaggerEnabled: true
+    services:
+      logging:
+        default: "Debug"
+        offersLibrary: "Debug"
+      swaggerEnabled: true
+    notification:
+      logging:
+        default: "Debug"
+      swaggerEnabled: true
+    processesworker:
+      clearinghouseConnectDisabled: true
+      logging:
+        default: "Debug"
+        processesLibrary: "Debug"
+        bpdmLibrary: "Debug"
+        clearinghouseLibrary: "Debug"
+        custodianLibrary: "Debug"
+        sdfactoryLibrary: "Debug"
+        offerProvider: "Debug"
+      bpdm:
+        clientId: &bpdmAdminClientId "sa-cl7-cx-5"
+        clientSecret: &bpdmAdminClientSecret "changeme"
+      custodian:
+        clientId: "sa-cl5-custodian-2"
+        clientSecret: "changeme"
+      sdfactory:
+        issuerBpn: "BPNL00000003CRHK"
+        clientId: "sa-cl8-cx-1"
+        clientSecret: "changeme"
+      offerprovider:
+        clientId: "sa-cl2-03"
+        clientSecret: "changeme"
+      dim:
+        clientId: "sa-cl2-05"
+        clientSecret: "changeme"
+        grantType: "client_credentials"
+        scope: "openid"
+        baseAddress: "http://ssi-dim-wallet-stub.tx.test"
+        universalResolverAddress: "https://dev.uniresolver.io/"
+        encryptionConfigs:
+          index0:
+            encryptionKey:
+              "6cbaf47ee30c778088e6faa44e2f0eed98beda86db06c7d2e37e32ab78e14b33"
+      issuerComponent:
+        clientId: "sa-cl2-04"
+        clientSecret: "changeme"
+        encryptionConfigs:
+          index0:
+            encryptionKey:
+              "39ffab76f99ece1e4ac72f973d5c703737324a75c6445e84fa317a7833476a15"
+      bpnDidResolver:
+        apiKey: ""
+      onboardingServiceProvider:
+        encryptionConfigs:
+          index0:
+            cipherMode: "CBC"
+            paddingMode: "PKCS7"
+            encryptionKey:
+              "f7bc3d99f1ace73e7a75b794affbbc26206ab29909821a102aaccb2e95e45f7c"
+          index1:
+            encryptionKey:
+              "8027152fe7a869c88acc86981760acd70ff1d660c2bd129eece94edef933caf7"
+      invitation:
+        encryptionConfigs:
+          index0:
+            encryptionKey:
+              "d84fea29d6eac0fa51e36682b164e7d61693cd4202ed04306d2d9c5d46655e2c"
+      mailing:
+        encryptionConfigs:
+          index0:
+            encryptionKey:
+              "d2e27d71b018cb36029184852f1baa3e26891be94718f77de4c7cc6c882fe317"
+    mailing:
+      host: "smtp.tx.test"
+      port: "587"
+      user: "smtp-user"
+      senderEmail: "smtp@tx.test"
+      password: ""
+    portalmigrations:
+      seeding:
+        seedTestData:
+          enabled: true
+          useOwnConfigMap:
+            configMap: "portal-testdata"
+            companies:
+              # BPN is retrieved from participant id of the eclipse-edc
+              eclipse-edc:
+                name: "BPN_OEM_A"
+                connectorUrl: "http://eclipse-edc-controlplane.tx.test/api/v1/dsp"
+                connectorName: "Eclipse EDC Connector"
+              dataconsumerOne:
+                name: "BPN_OEM_B"
+                connectorUrl: "http://dataconsumer-1-controlplane.tx.test/api/v1/dsp"
+                connectorName: "BPN OEM B Connector"
+              dataconsumerTwo:
+                name: "BPN_OEM_C"
+                connectorUrl: "http://dataconsumer-2-controlplane.tx.test/api/v1/dsp"
+                connectorName: "BPN OEM C Connector"
+              company4:
+                name: "BPN_IRS_TEST"
+                bpn: "BPNL00000003AWSS"
+                connectorUrl: "http://company4-controlplane.tx.test/api/v1/dsp"
+                connectorName: "BPN IRS TEST Connector"
+              company5:
+                name: "BPN_N_TIER_A"
+                bpn: "BPNL00000003B0Q0"
+                connectorUrl: "http://company5-controlplane.tx.test/api/v1/dsp"
+                connectorName: "BPN N TIER A Connector"
+              company6:
+                name: "BPN_TRACEX_A_SITE_A"
+                bpn: "BPNS0000000008ZZ"
+                connectorUrl: "http://company6-controlplane.tx.test/api/v1/dsp"
+                connectorName: "BPN TRACEX A SITE A Connector"
+              company7:
+                name: "BPN_TRACEX_B"
+                bpn: "BPNL00000003CNKC"
+                connectorUrl: "http://company7-controlplane.tx.test/api/v1/dsp"
+                connectorName: "BPN TRACEX B Connector"
+              company8:
+                name: "BPN_DISMANTLER"
+                bpn: "BPNL00000003B6LU"
+                connectorUrl: "http://company8-controlplane.tx.test/api/v1/dsp"
+                connectorName: "BPN DISMANTLER Connector"
+              company9:
+                name: "BPN_TRACEX_A"
+                bpn: "BPNL00000003CML1"
+                connectorUrl: "http://company9-controlplane.tx.test/api/v1/dsp"
+                connectorName: "BPN TRACEX A Connector"
+              company10:
+                name: "BPN_TRACEX_B_SITE_A"
+                bpn: "BPNS00000008BDFH"
+                connectorUrl: "http://company10-controlplane.tx.test/api/v1/dsp"
+                connectorName: "BPN TRACEX B SITE A Connector"
+              company11:
+                name: "BPN_TIER_A"
+                bpn: "BPNL00000003B2OM"
+                connectorUrl: "http://company11-controlplane.tx.test/api/v1/dsp"
+                connectorName: "BPN TIER A Connector"
+              company12:
+                name: "BPN_TIER_C"
+                bpn: "BPNL00000003CSGV"
+                connectorUrl: "http://company12-controlplane.tx.test/api/v1/dsp"
+                connectorName: "BPN TIER C Connector"
+              company13:
+                name: "BPN_TIER_B"
+                bpn: "BPNL00000003B5MJ"
+                connectorUrl: "http://company13-controlplane.tx.test/api/v1/dsp"
+                connectorName: "BPN TIER B Connector"
+              company14:
+                name: "BPN_SUB_TIER_B"
+                bpn: "BPNL00000003AXS3"
+                connectorUrl: "http://company14-controlplane.tx.test/api/v1/dsp"
+                connectorName: "BPN SUB TIER B Connector"
+              company15:
+                name: "BPN_SUB_TIER_A"
+                bpn: "BPNL00000003B3NX"
+                connectorUrl: "http://company15-controlplane.tx.test/api/v1/dsp"
+                connectorName: "BPN SUB TIER A Connector"
+              company16:
+                name: "BPN_SUB_TIER_C"
+                bpn: "BPNL00000000BJTL"
+                connectorUrl: "http://company16-controlplane.tx.test/api/v1/dsp"
+                connectorName: "BPN SUB TIER C Connector"
+      logging:
+        default: "Debug"
+    provisioning:
+      sharedRealm:
+        smtpServer:
+          host: "smtp.tx.test"
+          port: "587"
+          user: "smtp-user"
+          password: ""
+          from: "smtp@tx.test"
+          replyTo: "smtp@tx.test"
+    ingress:
+      enabled: true
+      name: "portal-backend"
+      annotations:
+        nginx.ingress.kubernetes.io/use-regex: "true"
+        nginx.ingress.kubernetes.io/enable-cors: "true"
+        nginx.ingress.kubernetes.io/proxy-body-size: "8m"
+        nginx.ingress.kubernetes.io/cors-allow-origin: "http://localhost:3000, http://*.tx.test"
+      hosts:
+        - host: "portal-backend.tx.test"
+          paths:
+            - path: "/api/registration"
+              pathType: "Prefix"
+              backend:
+                service: "registration-service"
+                port: 8080
+            - path: "/api/administration"
+              pathType: "Prefix"
+              backend:
+                service: "administration-service"
+                port: 8080
+            - path: "/api/notification"
+              pathType: "Prefix"
+              backend:
+                service: "notification-service"
+                port: 8080
+            - path: "/api/provisioning"
+              pathType: "Prefix"
+              backend:
+                service: "provisioning-service"
+                port: 8080
+            - path: "/api/apps"
+              pathType: "Prefix"
+              backend:
+                service: "marketplace-app-service"
+                port: 8080
+            - path: "/api/services"
+              pathType: "Prefix"
+              backend:
+                service: "services-service"
+                port: 8080
+
+centralidp:
+  enabled: true
+  keycloak:
+    nameOverride: "centralidp"
+    replicaCount: 1
+    auth:
+      adminPassword: "adminconsolepwcentralidp"
+    postgresql:
+      nameOverride: "centralidp-postgresql"
+      auth:
+        password: "dbpasswordcentralidp"
+        postgresPassword: "dbpasswordcentralidp"
+      architecture: standalone
+      primary:
+        persistence:
+          enabled: false
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+          requests:
+            cpu: 200m
+            memory: 256Mi
+    ingress:
+      enabled: true
+      ingressClassName: "nginx"
+      hostname: "centralidp.tx.test"
+      annotations:
+        nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+        nginx.ingress.kubernetes.io/cors-allow-methods: "PUT, GET, POST, OPTIONS"
+        nginx.ingress.kubernetes.io/cors-allow-origin: "http://centralidp.tx.test"
+        nginx.ingress.kubernetes.io/enable-cors: "true"
+        nginx.ingress.kubernetes.io/proxy-buffer-size: "128k"
+        nginx.ingress.kubernetes.io/proxy-buffering: "on"
+        nginx.ingress.kubernetes.io/proxy-buffers-number: "20"
+        nginx.ingress.kubernetes.io/use-regex: "true"
+      tls: false
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+      requests:
+        cpu: 200m
+        memory: 256Mi
+  realmSeeding:
+    sslRequired: "none"
+    clients:
+      registration:
+        redirects:
+          - http://portal.tx.test/*
+      portal:
+        rootUrl: http://portal.tx.test/home
+        redirects:
+          - http://portal.tx.test/*
+      semantics:
+        redirects:
+          - http://portal.tx.test/*
+
+sharedidp:
+  enabled: true
+  keycloak:
+    nameOverride: "sharedidp"
+    replicaCount: 1
+    auth:
+      adminPassword: "adminconsolepwsharedidp"
+    postgresql:
+      nameOverride: "sharedidp-postgresql"
+      auth:
+        password: "dbpasswordsharedidp"
+        postgresPassword: "dbpasswordsharedidp"
+      architecture: standalone
+      primary:
+        persistence:
+          enabled: false
+        resources:
+          limits:
+            cpu: 1000m
+            memory: 1Gi
+          requests:
+            cpu: 200m
+            memory: 256Mi
+    ingress:
+      enabled: true
+      ingressClassName: "nginx"
+      hostname: "sharedidp.tx.test"
+      annotations:
+        nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+        nginx.ingress.kubernetes.io/cors-allow-methods: "PUT, GET, POST, OPTIONS"
+        nginx.ingress.kubernetes.io/cors-allow-origin: "http://sharedidp.tx.test"
+        nginx.ingress.kubernetes.io/enable-cors: "true"
+        nginx.ingress.kubernetes.io/proxy-buffer-size: "128k"
+        nginx.ingress.kubernetes.io/proxy-buffering: "on"
+        nginx.ingress.kubernetes.io/proxy-buffers-number: "20"
+        nginx.ingress.kubernetes.io/use-regex: "true"
+      tls: false
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+      requests:
+        cpu: 200m
+        memory: 256Mi
+  realmSeeding:
+    sslRequired: "none"
+    clients:
+      registration:
+        redirects:
+          - http://portal.tx.test/*
+      portal:
+        rootUrl: http://portal.tx.test/home
+        redirects:
+          - http://portal.tx.test/*
+      semantics:
+        redirects:
+          - http://portal.tx.test/*
+
+vault:
+  enabled: true
+  server:
+    ingress:
+      enabled: true
+      ingressClassName: "nginx"
+      hostname: "vault.tx.test"
+      annotations:
+        nginx.ingress.kubernetes.io/enable-cors: "true"
+        nginx.ingress.kubernetes.io/cors-allow-origin: "http://*.tx.test"
+      tls: false
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+      requests:
+        cpu: 200m
+        memory: 256Mi
+    authServerUrl: "http://centralidp.tx.test/auth"
+  service:
+    type: ClusterIP
+    port: 8080
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 200m
+      memory: 256Mi
+  keycloak:
+    enabled: false
+
+# Enable eclipse-edc instead of tx-data-provider
+# Eclipse EDC Connector (built from source)
+eclipse-edc:
+  enabled: true
+  seedTestdata: true
+  backendUrl: http://eclipse-edc-submodelserver:8080
+  registryUrl: http://eclipse-edc-dtr:8080/api/v3
+  controlplanePublicUrl: http://eclipse-edc-controlplane:8084
+  controlplaneManagementUrl: http://eclipse-edc-controlplane:8081
+  dataplaneUrl: http://eclipse-edc-dataplane:8181
+  nameOverride: eclipse-edc
+
+  # Service account with Vault access
+  serviceAccount:
+    create: true
+    name: eclipse-edc-vault-reader
+
+  # Control Plane Configuration
+  controlplane:
+    enabled: true
+    image:
+      repository: nuruldhamar/edc-controlplane
+      tag: latest
+      pullPolicy: Always
+    
+    ports:
+      default: 8080
+      management: 8081
+      control: 8083
+      protocol: 8084
+      catalog: 8085
+      metrics: 9090
+    
+    env:
+      # Core Identity
+      EDC_HOSTNAME: "eclipse-edc-controlplane"
+      EDC_PARTICIPANT_ID: "BPNL00000003CRHK"
+      EDC_STORAGE_TYPE: "in-memory"
+      EDC_AUTH_TYPE: "none"
+      
+      # Data Plane Selector URL
+      EDC_DPF_SELECTOR_URL: "http://eclipse-edc-controlplane:8085"
+      
+      # DSP Protocol
+      EDC_DSP_CALLBACK_ADDRESS: "http://eclipse-edc-controlplane:8084/api/v1/dsp"
+      EDC_DSP_CONTEXT_ENABLED: "true"
+      EDC_DSP_MANAGEMENT_ENABLED: "true"
+      EDC_DSP_WELL_KNOWN_PATH_ENABLED: "false"
+      
+      # Retry / Logging
+      EDC_CORE_RETRY_RETRIES_MAX: "3"
+      EDC_CORE_RETRY_RETRIES_DELAY: "1000"
+      EDC_CORE_RETRY_RETRIES_BACKOFF_MIN: "1000"
+      EDC_CORE_RETRY_RETRIES_BACKOFF_MAX: "10000"
+      LOGGING_LEVEL_EDC: "INFO"
+      LOGGING_LEVEL_ROOT: "WARN"
+      
+      # Metrics
+      EDC_METRICS_ENABLED: "true"
+      EDC_METRICS_REPORTING_CONSOLE_ENABLED: "true"
+      
+      # Transfer & Catalog
+      EDC_TRANSFER_TYPE: "http"
+      EDC_TRANSFER_ENDPOINT_URL: "http://eclipse-edc-controlplane:8082"
+      EDC_CATALOG_ENDPOINT_URL: "http://eclipse-edc-controlplane:8083"
+      
+      # IAM Configuration
+      EDC_IAM_ISSUER_ID: "did:web:ssi-dim-wallet-stub.tx.test:BPNL00000003CRHK"
+      EDC_IAM_STS_OAUTH_TOKEN_URL: "http://ssi-dim-wallet-stub.tx.test/oauth/token"
+      EDC_IAM_STS_OAUTH_CLIENT_ID: "BPNL00000003CRHK"
+      EDC_IAM_STS_OAUTH_CLIENT_SECRET_ALIAS: "edc-wallet-secret"
+      EDC_API_AUTH_DELEGATE_AUDIENCE: "BPNL00000003CRHK"
+      
+      # Tractus-X Configuration
+      TX_IAM_IATP_BDRS_SERVER_URL: "http://bdrs-server:8081/api/v1/directory"
+      TX_IAM_IATP_CREDENTIALSERVICE_URL: "http://ssi-dim-wallet-stub.tx.test/api"
+      EDC_IAM_DID_WEB_USE_HTTPS: "false"
+      
+      # Vault Integration
+      EDC_VAULT_HASHICORP_URL: "http://vault.tx.test"
+      EDC_VAULT_HASHICORP_TOKEN: "your-vault-token-here"
+      EDC_VAULT_HASHICORP_API_SECRET_PATH: "secret/"
+      EDC_VAULT_HASHICORP_HEALTH_CHECK_ENABLED: "true"
+      EDC_VAULT_HASHICORP_HEALTH_CHECK_STANDBY_OK: "true"
+    
+    resources:
+      limits:
+        cpu: 2000m
+        memory: 2Gi
+      requests:
+        cpu: 500m
+        memory: 512Mi
+    
+    ingress:
+      enabled: true
+      hostname: "eclipse-edc-controlplane.tx.test"
+      className: "nginx"
+      tls:
+        enabled: false
+      annotations:
+        nginx.ingress.kubernetes.io/enable-cors: "true"
+        nginx.ingress.kubernetes.io/cors-allow-origin: "http://*.tx.test"
+
+  # Data Plane Configuration
+  dataplane:
+    enabled: true
+    image:
+      repository: nuruldhamar/edc-dataplane
+      tag: latest
+      pullPolicy: Always
+    
+    ports:
+      default: 8181
+      data: 8182
+      management: 8183
+      public: 8184
+      proxy: 8185
+      metrics: 8186
+    
+    env:
+      # Identity
+      EDC_HOSTNAME: "eclipse-edc-dataplane"
+      EDC_PARTICIPANT_ID: "BPNL00000003CRHK"
+      EDC_STORAGE_TYPE: "in-memory"
+      EDC_AUTH_TYPE: "none"
+      
+      # Public API endpoint configuration
+      EDC_DATAPLANE_API_PUBLIC_BASEURL: "http://eclipse-edc-dataplane:8184/api/public"
+      
+      # Control Plane -> Data Plane Selector URL
+      EDC_DPF_SELECTOR_URL: "http://eclipse-edc-controlplane:8085/management/dataplanes"
+      
+      # Reverse Reference (Data Plane to Control Plane)
+      EDC_CONTROL_PLANE_API_PORT: "8080"
+      EDC_CONTROL_PLANE_MANAGEMENT_PORT: "8081"
+      EDC_CONTROL_PLANE_DATAPLANE_SELECTOR_URL: "http://eclipse-edc-controlplane:8085/management/dataplanes"
+      
+      # DSP
+      EDC_DSP_CALLBACK_ADDRESS: "http://eclipse-edc-dataplane:8184/api/v1/dsp"
+      EDC_DSP_CONTEXT_ENABLED: "true"
+      EDC_DSP_MANAGEMENT_ENABLED: "true"
+      EDC_DSP_WELL_KNOWN_PATH_ENABLED: "false"
+      
+      # Retry / Logging
+      EDC_CORE_RETRY_RETRIES_MAX: "3"
+      EDC_CORE_RETRY_RETRIES_DELAY: "1000"
+      EDC_CORE_RETRY_RETRIES_BACKOFF_MIN: "1000"
+      EDC_CORE_RETRY_RETRIES_BACKOFF_MAX: "10000"
+      LOGGING_LEVEL_EDC: "INFO"
+      LOGGING_LEVEL_ROOT: "WARN"
+      
+      # Metrics
+      EDC_METRICS_ENABLED: "true"
+      EDC_METRICS_REPORTING_CONSOLE_ENABLED: "true"
+      
+      # Transfer Token Config
+      EDC_TRANSFER_PROXY_TOKEN_SIGNER_PRIVATEKEY_ALIAS: "tokenSignerPrivateKey"
+      EDC_TRANSFER_PROXY_TOKEN_VERIFIER_PUBLICKEY_ALIAS: "tokenSignerPublicKey"
+      
+      # Tractus-X Configuration
+      TX_IAM_IATP_BDRS_SERVER_URL: "http://bdrs-server:8081/api/v1/directory"
+      TX_IAM_IATP_CREDENTIALSERVICE_URL: "http://ssi-dim-wallet-stub.tx.test/api"
+      EDC_IAM_DID_WEB_USE_HTTPS: "false"
+      
+      # Vault Integration
+      EDC_VAULT_HASHICORP_URL: "http://vault.tx.test"
+      EDC_VAULT_HASHICORP_TOKEN: "your-vault-token-here"
+      EDC_VAULT_HASHICORP_API_SECRET_PATH: "secret/"
+      EDC_VAULT_HASHICORP_HEALTH_CHECK_ENABLED: "true"
+      EDC_VAULT_HASHICORP_HEALTH_CHECK_STANDBY_OK: "true"
+    
+    resources:
+      limits:
+        cpu: 2000m
+        memory: 2Gi
+      requests:
+        cpu: 500m
+        memory: 512Mi
+    
+    ingress:
+      enabled: true
+      hostname: "eclipse-edc-dataplane.tx.test"
+      className: "nginx"
+      tls:
+        enabled: false
+      annotations:
+        nginx.ingress.kubernetes.io/enable-cors: "true"
+        nginx.ingress.kubernetes.io/cors-allow-origin: "http://*.tx.test"
+
+  # Digital Twin Registry
+  digital-twin-registry:
+    enabled: true
+    nameOverride: eclipse-edc-dtr
+    postgresql:
+      nameOverride: eclipse-edc-dtr-db
+      auth:
+        password: "dbpassworddtreclipseedc"
+      resources:
+        limits:
+          cpu: 1000m
+          memory: 1Gi
+        requests:
+          cpu: 200m
+          memory: 256Mi
+    registry:
+      host: eclipse-edc-dtr.test
+      resources:
+        limits:
+          cpu: 1000m
+          memory: 1Gi
+        requests:
+          cpu: 200m
+          memory: 256Mi
+
+  # Simple Data Backend
+  simple-data-backend:
+    enabled: true
+    nameOverride: eclipse-edc-submodelserver
+    ingress:
+      enabled: true
+      className: "nginx"
+      hosts:
+        - host: "eclipse-edc-submodelserver.tx.test"
+          paths:
+            - path: "/"
+              pathType: "Prefix"
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+      requests:
+        cpu: 200m
+        memory: 256Mi
+
+# Disable tx-data-provider
+tx-data-provider:
+  enabled: false
+
+# Disable observability components
+grafana:
+  enabled: false
+loki:
+  enabled: false
+opentelemetry-collector:
+  enabled: false
+prometheus:
+  enabled: false
+jaeger:
+  enabled: false
+
+# Disable auxiliary components
+pgadmin4:
+  enabled: false
+
+smtp4dev:
+  enabled: false
+
+# Disable other components to reduce resource usage
+dataconsumerOne:
+  enabled: false
+
+dataconsumerTwo:
+  enabled: false
+
+semantic-hub:
+  enabled: false
+
+bpndiscovery:
+  enabled: false
+
+discoveryfinder:
+  enabled: false
+
+sdfactory:
+  enabled: false
+
+selfdescription:
+  enabled: false
+
+bdrs:
+  enabled: false
+
+ssi-dim-wallet-stub:
+  enabled: false
+
+ssi-credential-issuer:
+  enabled: false
+
+validation:
+  enabled: false
+
+someiam:
+  enabled: false
+
+business-partners:
+  enabled: false
+
+smtp:
+  enabled: false 

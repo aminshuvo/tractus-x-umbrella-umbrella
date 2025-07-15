@@ -1,0 +1,1251 @@
+---
+# Source: umbrella/charts/sharedidp/charts/keycloak/templates/configmap-env-vars.yaml
+
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: umbrella-sharedidp-env-vars
+  namespace: "default"
+  labels:
+    app.kubernetes.io/instance: umbrella
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: sharedidp
+    app.kubernetes.io/version: 25.0.6
+    helm.sh/chart: keycloak-23.0.0
+    app.kubernetes.io/component: keycloak
+data:
+  KEYCLOAK_ADMIN: "admin"
+  KEYCLOAK_HTTP_PORT: "8080"
+  KEYCLOAK_PROXY_HEADERS: ""
+  KEYCLOAK_HOSTNAME: |-
+    http://sharedidp.tx.test/auth/
+  KEYCLOAK_HOSTNAME_STRICT: "false"
+  KEYCLOAK_ENABLE_STATISTICS: "false"
+  KEYCLOAK_DATABASE_HOST: "umbrella-sharedidp-postgresql"
+  KEYCLOAK_DATABASE_PORT: "5432"
+  KEYCLOAK_DATABASE_NAME: "iamsharedidp"
+  KEYCLOAK_DATABASE_USER: "kcshared"
+  KEYCLOAK_PRODUCTION: "false"
+  KEYCLOAK_ENABLE_HTTPS: "false"
+  KEYCLOAK_CACHE_TYPE: "ispn"
+  KEYCLOAK_CACHE_STACK: "kubernetes"
+  JAVA_OPTS_APPEND: "-Djgroups.dns.query=umbrella-sharedidp-headless.default.svc.cluster.local"
+  KEYCLOAK_LOG_OUTPUT: "default"
+  KEYCLOAK_LOG_LEVEL: "INFO"
+
+
+---
+# Source: umbrella/charts/centralidp/charts/keycloak/templates/pdb.yaml
+
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: umbrella-centralidp
+  namespace: "default"
+  labels:
+    app.kubernetes.io/instance: umbrella
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: centralidp
+    app.kubernetes.io/version: 25.0.6
+    helm.sh/chart: keycloak-23.0.0
+    app.kubernetes.io/component: keycloak
+spec:
+  maxUnavailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/instance: umbrella
+      app.kubernetes.io/name: centralidp
+      app.kubernetes.io/component: keycloak
+
+---
+# Source: umbrella/charts/centralidp/templates/secret-extra-service-accounts.yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: umbrella-centralidp-extra-service-accounts
+  namespace: default
+type: Opaque
+stringData:
+  # if secret doesn't exist, use provided value from values file or generate a random one
+  satest01: "UbfW4CR1xH4OskkovqJ2JzcwnQIrG7oj"
+  satest02: "pyFUZP2L9UCSVJUScHcN3ZEgy2PGyEpg"
+  satest03: "tPwy4exxH1sXBRQouobSA2nNVaaPuwCs"
+  satest04: "BxZ3cwYUPJKK7gI4wq7q6Hgoxel6MphF"
+  satest05: "dR00GN1AWCYbRGbZY8TXjs2YEPMeCxLF"
+  satest06: "pDSziT0TUFAkMx0qGFcvpE4XkMqPh13v"
+  satest07: "GY5a44sNuNIjrTyjHvdEPLeNRHH0Kt39"
+  satest08: "WUXpQx1aIclA7enqtk4o2uvLDLMreUMI"
+  satest09: "N08TGNdhUskJcmVEnOh1tAGwr9oca9PU"
+  satest10: "gzdSG0CBDJrtv1gje0zUASu1S9P4I7xP"
+  satest11: "CC3fz3dQGZsBp2NCbowOV65efBFZTgEO"
+  satest12: "2gjSlFxBO7spEM4aTz3f8CqDS0klbt7C"
+  satest13: "3YQzDqEsdUZ83DVHSIRYUCK4pot61r5M"
+  satest14: "7qtMpfN3otq5dGiEPssVongXK56lb9LE"
+  satest15: "8QiZ8ineW0Lt8ZOlC2MYuCR0TvM6vMYX"
+  satest16: "d2sqUurBH9Vd8DNRmjiMfObU67ajorCq"
+
+---
+# Source: umbrella/charts/centralidp/charts/keycloak/templates/serviceaccount.yaml
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: umbrella-centralidp
+  namespace: "default"
+  labels:
+    app.kubernetes.io/instance: umbrella
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: centralidp
+    app.kubernetes.io/version: 25.0.6
+    helm.sh/chart: keycloak-23.0.0
+    app.kubernetes.io/component: keycloak
+automountServiceAccountToken: false
+
+---
+# Source: umbrella/charts/portal/templates/deployment-backend-registration.yaml
+###############################################################
+# Copyright (c) 2022 Contributors to the Eclipse Foundation
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License, Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0.
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+###############################################################
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: umbrella-portal-registration-service
+  namespace: default
+  labels:
+    helm.sh/chart: portal-2.4.0
+    app.kubernetes.io/name: portal
+    app.kubernetes.io/instance: umbrella
+    app.kubernetes.io/version: "2.4.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: umbrella-portal-registration-service
+      app.kubernetes.io/name: portal
+      app.kubernetes.io/instance: umbrella
+  template:
+    metadata:
+      labels:
+        app: umbrella-portal-registration-service
+        app.kubernetes.io/name: portal
+        app.kubernetes.io/instance: umbrella
+    spec:
+      containers:
+      - name: umbrella-portal-registration-service
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+        image: "docker.io/tractusx/portal-registration-service:v2.4.0"
+        imagePullPolicy: "IfNotPresent"
+        env:
+        - name: DOTNET_ENVIRONMENT
+          value: "Development"
+        - name: TMPDIR
+          value: "/mnt/tmp"
+        - name: "PORTAL_PASSWORD"
+          valueFrom:
+            secretKeyRef:
+              name: "portal-postgres"
+              key: "portal-password"
+        - name: "PROVISIONING_PASSWORD"
+          valueFrom:
+            secretKeyRef:
+              name: "portal-postgres"
+              key: "provisioning-password"
+        - name: "CONNECTIONSTRINGS__PORTALDB"
+          value: "Server=umbrella-portal-backend-postgresql;Database=postgres;Port=5432;User Id=portal;Password=$(PORTAL_PASSWORD);Ssl Mode=Disable;"
+        - name: "CONNECTIONSTRINGS__PROVISIONINGDB"
+          value: "Server=umbrella-portal-backend-postgresql;Database=postgres;Port=5432;User Id=provisioning;Password=$(PROVISIONING_PASSWORD);Ssl Mode=Disable;"
+        - name: "DATABASEACCESS__PORTAL__DATABASESCHEMA"
+          value: "portal"
+        - name: "BPNACCESS__BASEADDRESS"
+          value: "http://business-partners.tx.test/pool/v6"
+        - name: "HEALTHCHECKS__0__PATH"
+          value: "/health/startup"
+        - name: HEALTHCHECKS__0__TAGS__1
+          value: portaldb
+        - name: "HEALTHCHECKS__1__PATH"
+          value: "/ready"
+        - name: "HEALTHCHECKS__2__PATH"
+          value: "/healthz"
+        - name: "JWTBEAREROPTIONS__METADATAADDRESS"
+          value: "http://centralidp.tx.test/auth/realms/CX-Central/.well-known/openid-configuration"
+        - name: "JWTBEAREROPTIONS__REQUIREHTTPSMETADATA"
+          value: "false"
+        - name: "JWTBEAREROPTIONS__TOKENVALIDATIONPARAMETERS__VALIDAUDIENCE"
+          value: "Cl1-CX-Registration"
+        - name: "JWTBEAREROPTIONS__TOKENVALIDATIONPARAMETERS__VALIDISSUER"
+          value: "http://centralidp.tx.test/auth/realms/CX-Central"
+        - name: "JWTBEAREROPTIONS__TOKENVALIDATIONPARAMETERS__CLOCKSKEW"
+          value: "00:05:00"
+        - name: "JWTBEAREROPTIONS__REFRESHINTERVAL"
+          value: "00:00:30"
+        - name: "KEYCLOAK__CENTRAL__AUTHREALM"
+          value: "CX-Central"
+        - name: "KEYCLOAK__CENTRAL__CLIENTID"
+          value: "sa-cl1-reg-2"
+        - name: "KEYCLOAK__CENTRAL__CLIENTSECRET"
+          valueFrom:
+            secretKeyRef:
+              name: "portal-backend-keycloak"
+              key: "central-client-secret"
+        - name: "KEYCLOAK__CENTRAL__CONNECTIONSTRING"
+          value: "http://centralidp.tx.test"
+        - name: "KEYCLOAK__CENTRAL__USEAUTHTRAIL"
+          value: "true"
+        - name: "KEYCLOAK__SHARED__AUTHREALM"
+          value: "master"
+        - name: "KEYCLOAK__SHARED__CLIENTID"
+          value: "sa-cl1-reg-1"
+        - name: "KEYCLOAK__SHARED__CLIENTSECRET"
+          valueFrom:
+            secretKeyRef:
+              name: "portal-backend-keycloak"
+              key: "shared-client-secret"
+        - name: "KEYCLOAK__SHARED__CONNECTIONSTRING"
+          value: "http://sharedidp.tx.test"
+        - name: "KEYCLOAK__SHARED__USEAUTHTRAIL"
+          value: "true"
+        - name: "SERILOG__MINIMUMLEVEL__Default"
+          value: "Debug"
+        - name: "SERILOG__MINIMUMLEVEL__OVERRIDE__Org.Eclipse.TractusX.Portal.Backend.Bpdm.Library"
+          value: "Debug"
+        - name: "SERILOG__MINIMUMLEVEL__OVERRIDE__Org.Eclipse.TractusX.Portal.Backend.Registration.Service.BusinessLogic"
+          value: "Debug"
+        - name: "MVC_ROUTING_BASEPATH"
+          value: "api/registration"
+        - name: "PROVISIONING__CENTRALREALM"
+          value: "CX-Central"
+        - name: "PROVISIONING__DIMUSERROLES__0__CLIENTID"
+          value: "technical_roles_management"
+        - name: "PROVISIONING__DIMUSERROLES__0__USERROLENAMES__0"
+          value: "Identity Wallet Management"
+        - name: "PROVISIONING__USERROLESACCESSIBLEBYPROVIDERONLY__0__CLIENTID"
+          value: "technical_roles_management"
+        - name: "PROVISIONING__USERROLESACCESSIBLEBYPROVIDERONLY__0__USERROLENAMES__0"
+          value: "BPDM Pool Consumer"  
+        - name: "PROVISIONING__USERROLESACCESSIBLEBYPROVIDERONLY__0__USERROLENAMES__1"
+          value: "BPDM Sharing Output Consumer"
+        - name: "PROVISIONING__USERROLESACCESSIBLEBYPROVIDERONLY__0__USERROLENAMES__2"
+          value: "BPDM Sharing Input Manager"
+        - name: "PROVISIONING__INVITEDUSERINITIALROLES__0__CLIENTID"
+          value: "Cl1-CX-Registration"
+        - name: "APPMARKETPLACE__SERVICEMANAGERROLES__0__USERROLENAMES__0"
+          value: "Company Admin"
+        - name: "PROVISIONING__SERVICEACCOUNTCLIENTPREFIX"
+          value: "sa"
+        - name: "REGISTRATION__APPLICATIONSTATUSIDS__0"
+          value: "SUBMITTED"
+        - name: "REGISTRATION__APPLICATIONSTATUSIDS__1"
+          value: "DECLINED"
+        - name: "REGISTRATION__APPLICATIONSTATUSIDS__2"
+          value: "CONFIRMED"
+        - name: "REGISTRATION__APPLICATIONDECLINESTATUSIDS__0"
+          value: "CREATED"
+        - name: "REGISTRATION__APPLICATIONDECLINESTATUSIDS__1"
+          value: "ADD_COMPANY_DATA"
+        - name: "REGISTRATION__APPLICATIONDECLINESTATUSIDS__2"
+          value: "INVITE_USER"
+        - name: "REGISTRATION__APPLICATIONDECLINESTATUSIDS__3"
+          value: "SELECT_COMPANY_ROLE"
+        - name: "REGISTRATION__APPLICATIONDECLINESTATUSIDS__4"
+          value: "UPLOAD_DOCUMENTS"
+        - name: "REGISTRATION__APPLICATIONDECLINESTATUSIDS__5"
+          value: "VERIFY"
+        - name: "REGISTRATION__BASEPORTALADDRESS"
+          value: "http://portal.tx.test/registration/"
+        - name: "REGISTRATION__PASSWORDRESENDADDRESS"
+          value: "http://portal.tx.test/home/passwordResend"
+        - name: "REGISTRATION__DOCUMENTTYPEIDS__0"
+          value: "CX_FRAME_CONTRACT"
+        - name: "REGISTRATION__DOCUMENTTYPEIDS__1"
+          value: "COMMERCIAL_REGISTER_EXTRACT"
+        - name: "REGISTRATION__KEYCLOAKCLIENTID"
+          value: "Cl1-CX-Registration"
+        - name: "SWAGGERENABLED"
+          value: "true"
+        - name: "REGISTRATION__REGISTRATIONDOCUMENTTYPEIDS__0"
+          value: "CX_FRAME_CONTRACT"
+        - name: "REGISTRATION__SUBMITDOCUMENTTYPEIDS__0"
+          value: "COMMERCIAL_REGISTER_EXTRACT"
+        - name: "MAILINGPROCESSCREATION__ENCRYPTIONCONFIGINDEX"
+          value: "0"
+        - name: "MAILINGPROCESSCREATION__ENCRYPTIONCONFIGS__0__INDEX"
+          value: "0"
+        - name: "MAILINGPROCESSCREATION__ENCRYPTIONCONFIGS__0__ENCRYPTIONKEY"
+          valueFrom:
+            secretKeyRef:
+              name: "portal-backend-interfaces"
+              key: "mailing-encryption-key0"
+        - name: "MAILINGPROCESSCREATION__ENCRYPTIONCONFIGS__0__CIPHERMODE"
+          value: "CBC"
+        - name: "MAILINGPROCESSCREATION__ENCRYPTIONCONFIGS__0__PADDINGMODE"
+          value: "PKCS7"
+        - name: "APPLICATIONCREATION__USEDIMWALLET"
+          value: "true"
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        startupProbe:
+          httpGet:
+            path: /health/startup
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 1
+          successThreshold: 1
+          failureThreshold: 30
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 10
+          successThreshold: 1
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /ready
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 1
+          successThreshold: 1
+          failureThreshold: 3
+        resources:
+          limits:
+            cpu: 225m
+            memory: 400M
+          requests:
+            cpu: 75m
+            memory: 400M
+        volumeMounts:
+        - mountPath: /mnt/tmp
+          name: tmp
+      volumes:
+      - emptyDir: {}
+        name: tmp
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app.kubernetes.io/name
+                  operator: DoesNotExist
+              topologyKey: kubernetes.io/hostname
+            weight: 100
+
+
+---
+# Source: umbrella/charts/eclipse-edc/templates/controlplane-ingress.yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: umbrella-eclipse-edc-controlplane
+  labels:
+    helm.sh/chart: eclipse-edc-0.1.0
+    app.kubernetes.io/name: eclipse-edc
+    app.kubernetes.io/instance: umbrella
+    app.kubernetes.io/version: "0.1.0"
+    app.kubernetes.io/managed-by: Helm
+    component: controlplane
+  annotations:
+    nginx.ingress.kubernetes.io/cors-allow-origin: http://*.tx.test
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: "eclipse-edc-controlplane.tx.test"
+    http:
+      paths:
+      - path: /api/v1/dsp
+        pathType: Prefix
+        backend:
+                    service:
+            name: umbrella-eclipse-edc-controlplane
+            port:
+              number: 8084
+        - path: /management
+          pathType: Prefix
+          backend:
+            service:
+              name: umbrella-eclipse-edc-controlplane
+              port:
+                number: 8081
+        - path: /health
+          pathType: Exact
+          backend:
+            service:
+              name: umbrella-eclipse-edc-controlplane
+              port:
+                number: 8081
+        - path: /
+          pathType: Prefix
+          backend:
+            service:
+              name: umbrella-eclipse-edc-controlplane
+              port:
+                number: 8080 
+---
+# Source: umbrella/charts/centralidp/charts/keycloak/charts/postgresql/templates/serviceaccount.yaml
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: umbrella-centralidp-postgresql
+  namespace: "default"
+  labels:
+    app.kubernetes.io/instance: umbrella
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: centralidp-postgresql
+    app.kubernetes.io/version: "15"
+    helm.sh/chart: postgresql-16.0.0
+automountServiceAccountToken: false
+
+---
+# Source: umbrella/charts/portal/templates/deployment-frontend-registration.yaml
+###############################################################
+# Copyright (c) 2022 Contributors to the Eclipse Foundation
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License, Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0.
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+###############################################################
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: umbrella-portal-registration
+  namespace: default
+  labels:
+    helm.sh/chart: portal-2.4.0
+    app.kubernetes.io/name: portal
+    app.kubernetes.io/instance: umbrella
+    app.kubernetes.io/version: "2.4.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  replicas: 1
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: umbrella-portal-registration
+      app.kubernetes.io/name: portal
+      app.kubernetes.io/instance: umbrella
+  template:
+    metadata:
+      labels:
+        app: umbrella-portal-registration
+        app.kubernetes.io/name: portal
+        app.kubernetes.io/instance: umbrella
+    spec:
+      containers:
+      - name: umbrella-portal-registration
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+        image: docker.io/tractusx/portal-frontend-registration:v2.2.0
+        imagePullPolicy: "IfNotPresent"
+        env:
+          - name: PORTAL_ASSETS_URL
+            value: "http://portal.tx.test/assets"
+          - name: PORTAL_BACKEND_URL
+            value: "http://portal-backend.tx.test"
+          - name: CENTRALIDP_URL
+            value: "http://centralidp.tx.test/auth"
+          - name: REALM
+            value: "CX-Central"
+          - name: CLIENT_ID_REGISTRATION
+            value: "Cl1-CX-Registration"
+        ports:
+        - name: http
+          containerPort: 8080
+          protocol: TCP
+        startupProbe:
+          httpGet:
+            path: "/"
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 1
+          successThreshold: 1
+          failureThreshold: 30
+        livenessProbe:
+          httpGet:
+            path: "/"
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 10
+          successThreshold: 1
+          failureThreshold: 3
+        # @url: https://cloud.google.com/blog/products/containers-kubernetes/kubernetes-best-practices-setting-up-health-checks-with-readiness-and-liveness-probes
+        readinessProbe:
+          httpGet:
+            path: "/"
+            port: 8080
+            scheme: HTTP
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 1
+          successThreshold: 1
+          failureThreshold: 3
+        resources:
+          limits:
+            cpu: 75m
+            memory: 100M
+          requests:
+            cpu: 25m
+            memory: 100M
+        volumeMounts:
+        - mountPath: /tmp
+          name: tmp
+      volumes:
+      - emptyDir: {}
+        name: tmp
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app.kubernetes.io/name
+                  operator: DoesNotExist
+              topologyKey: kubernetes.io/hostname
+            weight: 100
+
+---
+# Source: umbrella/charts/centralidp/charts/keycloak/charts/postgresql/templates/primary/svc.yaml
+
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: umbrella-centralidp-postgresql
+  namespace: "default"
+  labels:
+    app.kubernetes.io/instance: umbrella
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: centralidp-postgresql
+    app.kubernetes.io/version: "15"
+    helm.sh/chart: postgresql-16.0.0
+    app.kubernetes.io/component: primary
+spec:
+  type: ClusterIP
+  sessionAffinity: None
+  ports:
+    - name: tcp-postgresql
+      port: 5432
+      targetPort: tcp-postgresql
+      nodePort: null
+  selector:
+    app.kubernetes.io/instance: umbrella
+    app.kubernetes.io/name: centralidp-postgresql
+    app.kubernetes.io/component: primary
+
+---
+# Source: umbrella/charts/sharedidp/charts/keycloak/charts/postgresql/templates/secrets.yaml
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: umbrella-sharedidp-postgresql
+  namespace: "default"
+  labels:
+    app.kubernetes.io/instance: umbrella
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: sharedidp-postgresql
+    app.kubernetes.io/version: "15"
+    helm.sh/chart: postgresql-16.0.0
+type: Opaque
+data:
+  postgres-password: "ZGJwYXNzd29yZHNoYXJlZGlkcA=="
+  password: "ZGJwYXNzd29yZHNoYXJlZGlkcA=="
+  # We don't auto-generate LDAP password when it's not provided as we do for other passwords
+
+---
+# Source: umbrella/templates/configmap-portal-testdata-seeding.yaml
+
+
+
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name:  "portal-testdata"
+  namespace: default
+data:
+  addresses.test.json: |-
+    [
+      {
+        "id": "b4db3945-19a7-4a50-97d6-e66e8dfd04fe",
+        "date_created": "2022-03-24 18:01:33.306000 +00:00",
+        "date_last_changed": "2022-03-24 18:01:33.306000 +00:00",
+        "city": "Munich",
+        "region": "BY",
+        "streetadditional": null,
+        "streetname": "Street",
+        "streetnumber": "1",
+        "zipcode": "00001",
+        "country_alpha2code": "DE"
+      },
+      {
+        "id": "aa49c0ec-4e65-4115-a01c-7adfc36d220e",
+        "date_created": "2022-03-24 18:01:33.391000 +00:00",
+        "date_last_changed": "2022-03-24 18:01:33.391000 +00:00",
+        "city": "Berlin",
+        "region": "BE",
+        "streetadditional": null,
+        "streetname": "Street",
+        "streetnumber": "4",
+        "zipcode": "00001",
+        "country_alpha2code": "DE"
+      },
+      {
+        "id": "86da3e1c-a634-41a6-ad44-9880746123e4",
+        "date_created": "2022-03-24 18:01:33.435000 +00:00",
+        "date_last_changed": "2022-03-24 18:01:33.435000 +00:00",
+        "city": "Cologne",
+        "region": "NW",
+        "streetadditional": null,
+        "streetname": "Street",
+        "streetnumber": "6",
+        "zipcode": "00001",
+        "country_alpha2code": "DE"
+      },
+      {
+        "id": "0f562ea7-4cc1-47a9-bfee-b41b0ac67ebb",
+        "date_created": "2022-03-24 18:01:33.443000 +00:00",
+        "date_last_changed": "2022-03-24 18:01:33.443000 +00:00",
+        "city": "Munich",
+        "region": "BY",
+        "streetadditional": null,
+        "streetname": "Street",
+        "streetnumber": "17",
+        "zipcode": "00001",
+        "country_alpha2code": "DE"
+      },
+      {
+        "id": "081c8bfd-c6d1-4119-a5f8-a69726dfc11e",
+        "date_created": "2022-03-24 18:01:33.428000 +00:00",
+        "date_last_changed": "2022-03-24 18:01:33.428000 +00:00",
+        "city": "Rome",
+        "region": "62",
+        "streetadditional": null,
+        "streetname": "Street",
+        "streetnumber": "9",
+        "zipcode": "00001",
+        "country_alpha2code": "IT"
+      },
+      {
+        "id": "081c8bfd-c6d1-4119-a5f8-a69726dfc11f",
+        "date_created": "2022-03-24 18:01:33.428000 +00:00",
+        "date_last_changed": "2022-03-24 18:01:33.428000 +00:00",
+        "city": "Paris",
+        "region": "IDF",
+        "streetadditional": null,
+        "streetname": "Street",
+        "streetnumber": "9",
+        "zipcode": "00001",
+        "country_alpha2code": "FR"
+      },
+      {
+        "id": "f267f020-2caf-4d64-9aa1-20a6c123fe15",
+        "date_created": "2022-03-24 18:01:33.428000 +00:00",
+        "date_last_changed": "2022-03-24 18:01:33.428000 +00:00",
+        "city": "Vienna",
+        "region": "9",
+        "streetadditional": null,
+        "streetname": "Street",
+        "streetnumber": "9",
+        "zipcode": "00001",
+        "country_alpha2code": "AT"
+      }
+    ]
+  companies.test.json: |-
+    [
+      {
+        "id": "2dc4249f-b5ca-4d42-bef1-7a7a950a4f88",
+        "date_created": "2022-03-24 18:01:33.306000 +00:00",
+        "business_partner_number": "BPNL00000003AZQP",
+        "name": "BPN_OEM_B",
+        "shortname": "BPN_OEM_B",
+        "company_status_id": 2,
+        "address_id": "b4db3945-19a7-4a50-97d6-e66e8dfd04fe",
+        "self_description_document_id": "f90962ee-a358-4381-8947-c56268ff32c7"
+      },
+      {
+        "id": "220330ac-170d-4e22-8d72-9467ed042149",
+        "date_created": "2022-03-24 18:01:33.393000 +00:00",
+        "business_partner_number": "BPNL00000003AYRE",
+        "name": "BPN_OEM_A",
+        "shortname": "BPN_OEM_A",
+        "company_status_id": 1,
+        "address_id": "aa49c0ec-4e65-4115-a01c-7adfc36d220e",
+        "self_description_document_id": "f90962ee-a358-4381-8947-c56268ff32c7"
+      },
+      {
+        "id": "bdac6865-2a8d-4bfd-9373-9dfce8190895",
+        "date_created": "2022-03-24 18:01:33.430000 +00:00",
+        "business_partner_number": "BPNL00000003AVTH",
+        "name": "BPN_OEM_C",
+        "shortname": "BPN_OEM_C",
+        "company_status_id": 1,
+        "address_id": "0f562ea7-4cc1-47a9-bfee-b41b0ac67ebb",
+        "self_description_document_id": "f90962ee-a358-4381-8947-c56268ff32c7"
+      },
+      {
+        "id": "8d39f219-ec52-458f-b208-46ac0d5fcff9",
+        "date_created": "2022-03-24 18:01:33.430000 +00:00",
+        "business_partner_number": "BPNL00000003AWSS",
+        "name": "BPN_IRS_TEST",
+        "shortname": "BPN_IRS_TEST",
+        "company_status_id": 1,
+        "address_id": "0f562ea7-4cc1-47a9-bfee-b41b0ac67ebb",
+        "self_description_document_id": "f90962ee-a358-4381-8947-c56268ff32c7"
+      },
+      {
+        "id": "6491f342-c715-49d7-b3cf-7b7f765c2ac4",
+        "date_created": "2022-03-24 18:01:33.430000 +00:00",
+        "business_partner_number": "BPNL00000003B0Q0",
+        "name": "BPN_N_TIER_A",
+        "shortname": "BPN_N_TIER_A",
+        "company_status_id": 1,
+        "address_id": "0f562ea7-4cc1-47a9-bfee-b41b0ac67ebb",
+        "self_description_document_id": "f90962ee-a358-4381-8947-c56268ff32c7"
+      },
+      {
+        "id": "4e2abacb-8434-43df-a358-46082c69d3f8",
+        "date_created": "2022-03-24 18:01:33.430000 +00:00",
+        "business_partner_number": "BPNS0000000008ZZ",
+        "name": "BPN_TRACEX_A_SITE_A",
+        "shortname": "BPN_TRACEX_A_SITE_A",
+        "company_status_id": 1,
+        "address_id": "0f562ea7-4cc1-47a9-bfee-b41b0ac67ebb",
+        "self_description_document_id": "f90962ee-a358-4381-8947-c56268ff32c7"
+      },
+      {
+        "id": "2533487e-907a-4de9-ac59-d5b885e65346",
+        "date_created": "2022-03-24 18:01:33.430000 +00:00",
+        "business_partner_number": "BPNL00000003CNKC",
+        "name": "BPN_TRACEX_B",
+        "shortname": "BPN_TRACEX_B",
+        "company_status_id": 1,
+        "address_id": "0f562ea7-4cc1-47a9-bfee-b41b0ac67ebb",
+        "self_description_document_id": "f90962ee-a358-4381-8947-c56268ff32c7"
+      },
+      {
+        "id": "42cbfff7-f259-4862-9eaf-cbe6233e6e59",
+        "date_created": "2022-03-24 18:01:33.430000 +00:00",
+        "business_partner_number": "BPNL00000003B6LU",
+        "name": "BPN_DISMANTLER",
+        "shortname": "BPN_DISMANTLER",
+        "company_status_id": 1,
+        "address_id": "0f562ea7-4cc1-47a9-bfee-b41b0ac67ebb",
+        "self_description_document_id": "f90962ee-a358-4381-8947-c56268ff32c7"
+      },
+      {
+        "id": "1805898a-2625-48a0-8cf3-7c876d8cb069",
+        "date_created": "2022-03-24 18:01:33.430000 +00:00",
+        "business_partner_number": "BPNL00000003CML1",
+        "name": "BPN_TRACEX_A",
+        "shortname": "BPN_TRACEX_A",
+        "company_status_id": 1,
+        "address_id": "0f562ea7-4cc1-47a9-bfee-b41b0ac67ebb",
+        "self_description_document_id": "f90962ee-a358-4381-8947-c56268ff32c7"
+      },
+      {
+        "id": "0c946b81-147b-4ccd-b174-124ac14ab979",
+        "date_created": "2022-03-24 18:01:33.430000 +00:00",
+        "business_partner_number": "BPNS00000008BDFH",
+        "name": "BPN_TRACEX_B_SITE_A",
+        "shortname": "BPN_TRACEX_B_SITE_A",
+        "company_status_id": 1,
+        "address_id": "0f562ea7-4cc1-47a9-bfee-b41b0ac67ebb",
+        "self_description_document_id": "f90962ee-a358-4381-8947-c56268ff32c7"
+      },
+      {
+        "id": "c11ee5ee-dc2e-4551-b76f-9f6ac6edd9c9",
+        "date_created": "2022-03-24 18:01:33.430000 +00:00",
+        "business_partner_number": "BPNL00000003B2OM",
+        "name": "BPN_TIER_A",
+        "shortname": "BPN_TIER_A",
+        "company_status_id": 1,
+        "address_id": "0f562ea7-4cc1-47a9-bfee-b41b0ac67ebb",
+        "self_description_document_id": "f90962ee-a358-4381-8947-c56268ff32c7"
+      },
+      {
+        "id": "5914194c-1031-4070-b484-cf217a012609",
+        "date_created": "2022-03-24 18:01:33.430000 +00:00",
+        "business_partner_number": "BPNL00000003CSGV",
+        "name": "BPN_TIER_C",
+        "shortname": "BPN_TIER_C",
+        "company_status_id": 1,
+        "address_id": "0f562ea7-4cc1-47a9-bfee-b41b0ac67ebb",
+        "self_description_document_id": "f90962ee-a358-4381-8947-c56268ff32c7"
+      },
+      {
+        "id": "ed60c36c-0855-4341-bd0b-0872566aeabe",
+        "date_created": "2022-03-24 18:01:33.430000 +00:00",
+        "business_partner_number": "BPNL00000003B5MJ",
+        "name": "BPN_TIER_B",
+        "shortname": "BPN_TIER_B",
+        "company_status_id": 1,
+        "address_id": "0f562ea7-4cc1-47a9-bfee-b41b0ac67ebb",
+        "self_description_document_id": "f90962ee-a358-4381-8947-c56268ff32c7"
+      },
+      {
+        "id": "d5fde96a-65f1-45b3-9605-360909ed25c3",
+        "date_created": "2022-03-24 18:01:33.430000 +00:00",
+        "business_partner_number": "BPNL00000003AXS3",
+        "name": "BPN_SUB_TIER_B",
+        "shortname": "BPN_SUB_TIER_B",
+        "company_status_id": 1,
+        "address_id": "0f562ea7-4cc1-47a9-bfee-b41b0ac67ebb",
+        "self_description_document_id": "f90962ee-a358-4381-8947-c56268ff32c7"
+      },
+      {
+        "id": "d4234ab0-910f-47e2-b3e7-08fa1ddf505c",
+        "date_created": "2022-03-24 18:01:33.430000 +00:00",
+        "business_partner_number": "BPNL00000003B3NX",
+        "name": "BPN_SUB_TIER_A",
+        "shortname": "BPN_SUB_TIER_A",
+        "company_status_id": 1,
+        "address_id": "0f562ea7-4cc1-47a9-bfee-b41b0ac67ebb",
+        "self_description_document_id": "f90962ee-a358-4381-8947-c56268ff32c7"
+      },
+      {
+        "id": "aa85d559-81d5-4632-98b6-4f4df4ad20d9",
+        "date_created": "2022-03-24 18:01:33.430000 +00:00",
+        "business_partner_number": "BPNL00000000BJTL",
+        "name": "BPN_SUB_TIER_C",
+        "shortname": "BPN_SUB_TIER_C",
+        "company_status_id": 1,
+        "address_id": "0f562ea7-4cc1-47a9-bfee-b41b0ac67ebb",
+        "self_description_document_id": "f90962ee-a358-4381-8947-c56268ff32c7"
+      }
+    ]
+  connectors.test.json: |-
+    [
+      {
+        "id": "7e86a0b8-6903-496b-96d1-0ef508206833",
+        "name": "BPN OEM B Connector",
+        "connector_url": "http://dataconsumer-1-controlplane.tx.test/api/v1/dsp",
+        "type_id": 1,
+        "status_id": 2,
+        "provider_id": "2dc4249f-b5ca-4d42-bef1-7a7a950a4f88",
+        "host_id": "2dc4249f-b5ca-4d42-bef1-7a7a950a4f88",
+        "location_id": "DE",
+        "self_description_document_id": null
+      },
+      {
+        "id": "7e86a0b8-6903-496b-96d1-0ef508206834",
+        "name": "BPN OEM A Connector",
+        "connector_url": "http://dataprovider-controlplane.tx.test/api/v1/dsp",
+        "type_id": 1,
+        "status_id": 2,
+        "provider_id": "220330ac-170d-4e22-8d72-9467ed042149",
+        "host_id": "220330ac-170d-4e22-8d72-9467ed042149",
+        "location_id": "DE",
+        "self_description_document_id": null
+      },
+      {
+        "id": "7e86a0b8-6903-496b-96d1-0ef508206835",
+        "name": "BPN OEM C Connector",
+        "connector_url": "http://dataconsumer-2-controlplane.tx.test/api/v1/dsp",
+        "type_id": 1,
+        "status_id": 2,
+        "provider_id": "bdac6865-2a8d-4bfd-9373-9dfce8190895",
+        "host_id": "bdac6865-2a8d-4bfd-9373-9dfce8190895",
+        "location_id": "DE",
+        "self_description_document_id": null
+      },
+      {
+        "id": "7e86a0b8-6903-496b-96d1-0ef508206836",
+        "name": "BPN IRS TEST Connector",
+        "connector_url": "http://company4-controlplane.tx.test/api/v1/dsp",
+        "type_id": 1,
+        "status_id": 2,
+        "provider_id": "8d39f219-ec52-458f-b208-46ac0d5fcff9",
+        "host_id": "8d39f219-ec52-458f-b208-46ac0d5fcff9",
+        "location_id": "DE",
+        "self_description_document_id": null
+      },
+      {
+        "id": "7e86a0b8-6903-496b-96d1-0ef508206837",
+        "name": "BPN N TIER A Connector",
+        "connector_url": "http://company5-controlplane.tx.test/api/v1/dsp",
+        "type_id": 1,
+        "status_id": 2,
+        "provider_id": "6491f342-c715-49d7-b3cf-7b7f765c2ac4",
+        "host_id": "6491f342-c715-49d7-b3cf-7b7f765c2ac4",
+        "location_id": "DE",
+        "self_description_document_id": null
+      },
+      {
+        "id": "7e86a0b8-6903-496b-96d1-0ef508206838",
+        "name": "BPN TRACEX A SITE A Connector",
+        "connector_url": "http://company6-controlplane.tx.test/api/v1/dsp",
+        "type_id": 1,
+        "status_id": 2,
+        "provider_id": "4e2abacb-8434-43df-a358-46082c69d3f8",
+        "host_id": "4e2abacb-8434-43df-a358-46082c69d3f8",
+        "location_id": "DE",
+        "self_description_document_id": null
+      },
+      {
+        "id": "7e86a0b8-6903-496b-96d1-0ef508206839",
+        "name": "BPN TRACEX B Connector",
+        "connector_url": "http://company7-controlplane.tx.test/api/v1/dsp",
+        "type_id": 1,
+        "status_id": 2,
+        "provider_id": "2533487e-907a-4de9-ac59-d5b885e65346",
+        "host_id": "2533487e-907a-4de9-ac59-d5b885e65346",
+        "location_id": "DE",
+        "self_description_document_id": null
+      },
+      {
+        "id": "7e86a0b8-6903-496b-96d1-0ef508206840",
+        "name": "BPN DISMANTLER Connector",
+        "connector_url": "http://company8-controlplane.tx.test/api/v1/dsp",
+        "type_id": 1,
+        "status_id": 2,
+        "provider_id": "42cbfff7-f259-4862-9eaf-cbe6233e6e59",
+        "host_id": "42cbfff7-f259-4862-9eaf-cbe6233e6e59",
+        "location_id": "DE",
+        "self_description_document_id": null
+      },
+      {
+        "id": "7e86a0b8-6903-496b-96d1-0ef508206841",
+        "name": "BPN TRACEX A Connector",
+        "connector_url": "http://company9-controlplane.tx.test/api/v1/dsp",
+        "type_id": 1,
+        "status_id": 2,
+        "provider_id": "1805898a-2625-48a0-8cf3-7c876d8cb069",
+        "host_id": "1805898a-2625-48a0-8cf3-7c876d8cb069",
+        "location_id": "DE",
+        "self_description_document_id": null
+      },
+      {
+        "id": "7e86a0b8-6903-496b-96d1-0ef508206842",
+        "name": "BPN TRACEX B SITE A Connector",
+        "connector_url": "http://company10-controlplane.tx.test/api/v1/dsp",
+        "type_id": 1,
+        "status_id": 2,
+        "provider_id": "0c946b81-147b-4ccd-b174-124ac14ab979",
+        "host_id": "0c946b81-147b-4ccd-b174-124ac14ab979",
+        "location_id": "DE",
+        "self_description_document_id": null
+      },
+      {
+        "id": "7e86a0b8-6903-496b-96d1-0ef508206843",
+        "name": "BPN TIER A Connector",
+        "connector_url": "http://company11-controlplane.tx.test/api/v1/dsp",
+        "type_id": 1,
+        "status_id": 2,
+        "provider_id": "c11ee5ee-dc2e-4551-b76f-9f6ac6edd9c9",
+        "host_id": "c11ee5ee-dc2e-4551-b76f-9f6ac6edd9c9",
+        "location_id": "DE",
+        "self_description_document_id": null
+      },
+      {
+        "id": "7e86a0b8-6903-496b-96d1-0ef508206844",
+        "name": "BPN TIER C Connector",
+        "connector_url": "http://company12-controlplane.tx.test/api/v1/dsp",
+        "type_id": 1,
+        "status_id": 2,
+        "provider_id": "5914194c-1031-4070-b484-cf217a012609",
+        "host_id": "5914194c-1031-4070-b484-cf217a012609",
+        "location_id": "DE",
+        "self_description_document_id": null
+      },
+      {
+        "id": "7e86a0b8-6903-496b-96d1-0ef508206845",
+        "name": "BPN TIER B Connector",
+        "connector_url": "http://company13-controlplane.tx.test/api/v1/dsp",
+        "type_id": 1,
+        "status_id": 2,
+        "provider_id": "ed60c36c-0855-4341-bd0b-0872566aeabe",
+        "host_id": "ed60c36c-0855-4341-bd0b-0872566aeabe",
+        "location_id": "DE",
+        "self_description_document_id": null
+      },
+      {
+        "id": "7e86a0b8-6903-496b-96d1-0ef508206846",
+        "name": "BPN SUB TIER B Connector",
+        "connector_url": "http://company14-controlplane.tx.test/api/v1/dsp",
+        "type_id": 1,
+        "status_id": 2,
+        "provider_id": "d5fde96a-65f1-45b3-9605-360909ed25c3",
+        "host_id": "d5fde96a-65f1-45b3-9605-360909ed25c3",
+        "location_id": "DE",
+        "self_description_document_id": null
+      },
+      {
+        "id": "7e86a0b8-6903-496b-96d1-0ef508206847",
+        "name": "BPN SUB TIER A Connector",
+        "connector_url": "http://company15-controlplane.tx.test/api/v1/dsp",
+        "type_id": 1,
+        "status_id": 2,
+        "provider_id": "d4234ab0-910f-47e2-b3e7-08fa1ddf505c",
+        "host_id": "d4234ab0-910f-47e2-b3e7-08fa1ddf505c",
+        "location_id": "DE",
+        "self_description_document_id": null
+      },
+      {
+        "id": "7e86a0b8-6903-496b-96d1-0ef508206848",
+        "name": "BPN SUB TIER C Connector",
+        "connector_url": "http://company16-controlplane.tx.test/api/v1/dsp",
+        "type_id": 1,
+        "status_id": 2,
+        "provider_id": "aa85d559-81d5-4632-98b6-4f4df4ad20d9",
+        "host_id": "aa85d559-81d5-4632-98b6-4f4df4ad20d9",
+        "location_id": "DE",
+        "self_description_document_id": null
+      }
+    ]
+  documents.test.json: |-
+    [
+      {
+        "id": "f90962ee-a358-4381-8947-c56268ff32c7",
+        "date_created": "2023-09-28T09:02:11.131663+00:00",
+        "document_hash": "riK1M7T4OZsSwX8Mx2RdxEXls9OFz+lcKgq0X+lhYg71F+y6bpUNcMeaYf1dC3xqFdA9W25KEjJlgOQ3Vo6sxg==",
+        "document_content": "ewogICJzZWxmRGVzY3JpcHRpb25DcmVkZW50aWFsIjogewogICAgIlNlcnZpY2VPZmZlcmluZyI6IHsKICAgICAgIkBjb250ZXh0IjogWwogICAgICAgICJodHRwczovL3d3dy53My5vcmcvMjAxOC9jcmVkZW50aWFscy92MSIsCiAgICAgICAgImh0dHBzOi8vZjFjODI3ODUtNTU5OC00MWM3LWEwODMtMDFhOGUxYTgwZTE5Lm1vY2sucHN0bW4uaW8vY3R4c2QiCiAgICAgIF0sCiAgICAgICJ0eXBlIjogWwogICAgICAgICJWZXJpZmlhYmxlQ3JlZGVudGlhbCIKICAgICAgXSwKICAgICAgImlkIjogImh0dHBzOi8vY2FybGEuZGloLWNsb3VkLmNvbS90ZXN0L2NvbXBsaWFuY2Vfc2VydmljZS9wYXJ0aWNpcGFudC9CUE5MMDAwMDAwMDNBWlFQX3BhcnRpY2lwYW50Lmpzb24iLAogICAgICAiY3JlZGVudGlhbFN1YmplY3QiOiB7CiAgICAgICAgImJwbiI6ICJCUE5MSU5JVElBTERBVEFMT0FEIiwKICAgICAgICAicmVnaXN0cmF0aW9uTnVtYmVyIjogWwogICAgICAgICAgewogICAgICAgICAgICAidHlwZSI6ICJ2YXRJRCIsCiAgICAgICAgICAgICJ2YWx1ZSI6ICJERTI5MTYzNjAyOSIKICAgICAgICAgIH0KICAgICAgICBdLAogICAgICAgICJoZWFkcXVhcnRlckFkZHJlc3MiOiB7CiAgICAgICAgICAiY291bnRyeUNvZGUiOiAiREUiCiAgICAgICAgfSwKICAgICAgICAidHlwZSI6ICJMZWdhbFBhcnRpY2lwYW50IiwKICAgICAgICAibGVnYWxBZGRyZXNzIjogewogICAgICAgICAgImNvdW50cnlDb2RlIjogIkRFIgogICAgICAgIH0sCiAgICAgICAgImlkIjogIkJQTkxJTklUSUFMREFUQUxPQUQiCiAgICAgIH0sCiAgICAgICJpc3N1ZXIiOiAiQlBOTDAwMDAwMDAzQ1JISyIsCiAgICAgICJpc3N1YW5jZURhdGUiOiAiMjA5OS0wMC0wMFQwMDowMDowMDAiLAogICAgICAicHJvb2YiOiB7CiAgICAgICAgInR5cGUiOiAiSnNvbldlYlNpZ25hdHVyZTIwMjAiLAogICAgICAgICJjcmVhdGVkIjogIjIwOTktMDAtMDBUMDA6MDA6MDAwIiwKICAgICAgICAicHJvb2ZQdXJwb3NlIjogImFzc2VydGlvbk1ldGhvZCIsCiAgICAgICAgImp3cyI6ICJleUpoYkdjaU9pSlFVekkxTmlJc0ltSTJOQ0k2Wm1Gc2MyVXNJbU55YVhRaU9sc2lZalkwSWwxOS4uSUVKbGo3U2FEQWhqRGp2X2p0N1NfSUt3RVY4X1Q0cVM1ZFhCQ09TNF9xemZVczNNcFZ4WTZxNGxGSTUtOU9mald0blNhQkZDUzBkY0xCWFgtck9mM3dDVUgya245NGU4RldXemZndmxHMHdhM3RzbHRpaXN6UVBDNmJHZjY4MEhTR04yX0VBZ3NpWWdJMTRqVjFxTUhqd1ZFb1NpejJRRk1CNFFhNkF5WHRFSXotbF9reHBhVW9CLXBLYjEyOGJwYUFmN255VV9Eei1kWWFpOXViUTRReDRocHJwQS1Rb3dBR1dHM0JReURGdV8ydlJrYnpINGFPaUs5U3hRQWJqLVBOTXEzREQ0eWFFYjdJOTkwZEp2UFpVTXNOQWt5Tk1pS0pfUEprSzVIN3hlVGpnMERtYjY3R21WMk1NTmxxOHNlNkx2VHlmSFltMG00Sm53ZDRxaF9qY2hhbllhVkFsczNKUUo2TGNoQzdmTzBPUWRpQ1ZpNjVOcklzck5MWkFMb0ZTajh4TDE1VGIxamM0MHFrQl9ZS19uVG1HemNyVFo0SmVMUTZNdHZJd2tERmhuSFgwZjRhU0dxNW9tam9wLS1sMVduQ1lDSTR1eDNIcDV2V2VmZTNyMTVySmNabjN5a3RfWXRnNXlqbklhWWt6X2thVlhNTFgwTzdPVWJHUkR4ZUllNTc2WTlVLWJzemtSRnEzQmlSbnZ1TDBIUm4zM3VMaDJHVlNGa3RDd3dURVQtS0FhczItOTJ6bk9vR093WE44a1RuMGpQOWtkVVZob3BVUl9ZazhYTzNTLTZ1YzNJSWFxSVBZYlc5ZElqOXNDUmtyS29KLTlDVjRfdFg4dGpDRTlJZUhja2paTWJSUEFGb181WHExbHFvaGRQQmJTMG9rRXhOYmh3SE0iLAogICAgICAgICJ2ZXJpZmljYXRpb25NZXRob2QiOiAiZGlkOndlYjpjYXJsYS5kaWgtY2xvdWQuY29tOmRldjpzaWduZXJfc2VydmljZSIKICAgICAgfQogICAgfQogIH0sCiAgImNvbXBsaWFuY2VDcmVkZW50aWFsIjogewogICAgIkBjb250ZXh0IjogWwogICAgICAiaHR0cHM6Ly93d3cudzMub3JnLzIwMTgvY3JlZGVudGlhbHMvdjEiLAogICAgICAiaHR0cHM6Ly9neC1yZWdpc3RyeS50ZXN0LmRpaC1jbG91ZC5jb20vYXBpL3RydXN0ZWQtc2hhcGUtcmVnaXN0cnkvdjEvc2hhcGVzL2pzb25sZC90cnVzdGZyYW1ld29yayMiCiAgICBdLAogICAgInR5cGUiOiBbCiAgICAgICJWZXJpZmlhYmxlQ3JlZGVudGlhbCIKICAgIF0sCiAgICAiaWQiOiAiaHR0cHM6Ly9jYXJsYS5kaWgtY2xvdWQuY29tL3Rlc3QvY29tcGxpYW5jZV9zZXJ2aWNlL2NyZWRlbnRpYWwvQlBOTDAwMDAwMDAzQVpRUF9wYXJ0aWNpcGFudC5qc29uIiwKICAgICJjcmVkZW50aWFsU3ViamVjdCI6IFsKICAgICAgewogICAgICAgICJ0eXBlIjogImd4OmNvbXBsaWFuY2UiLAogICAgICAgICJpZCI6ICJCUE5MSU5JVElBTERBVEFMT0FEIiwKICAgICAgICAiaW50ZWdyaXR5IjogInNoYTI1Ni01OTg4YTRlY2VhYmYyMmMyNzE4Y2YyYWI0YjIwZTIwNmIwNWZkMTczZGU4OWQ5ZDUwZGEwOWE2MTIxM2RhYjhmIgogICAgICB9CiAgICBdLAogICAgImlzc3VlciI6ICJkaWQ6d2ViOmd4LWNvbXBsaWFuY2UudGVzdC5kaWgtY2xvdWQuY29tIiwKICAgICJpc3N1YW5jZURhdGUiOiAiMjA5OS0wMC0wMFQwMDowMDowMDAiLAogICAgImV4cGlyYXRpb25EYXRlIjogIjIwOTktMDAtMDBUMDA6MDA6MDAwIiwKICAgICJwcm9vZiI6IHsKICAgICAgInR5cGUiOiAiSnNvbldlYlNpZ25hdHVyZTIwMjAiLAogICAgICAiY3JlYXRlZCI6ICIyMDk5LTAwLTAwVDAwOjAwOjAwMCIsCiAgICAgICJwcm9vZlB1cnBvc2UiOiAiYXNzZXJ0aW9uTWV0aG9kIiwKICAgICAgImp3cyI6ICJleUpoYkdjaU9pSlFVekkxTmlJc0ltSTJOQ0k2Wm1Gc2MyVXNJbU55YVhRaU9sc2lZalkwSWwxOS4uR1dTY19PVDFTLUdUcjlRM25wRDZnZkVwUnViMGVQSDc2bFBFTlN0cXYxNnZHTjY1by1pRmdlLVZIdHpXTDlaM1NNQTZmbXAwMFpNUXhod1c2dm1JUHdkWk4yZGI1LWhsbjRveVhKRWJMQzJxeE9udTNhcXhsSGRwYzRUeXpPZkdRVklreEpHRkNOdTdDLU1JLVZ1MW0xSUhZSTNkbU16dm1jMUEyNjA0ZW5FanRhdW1jbnlEXzBGcm1nakxua1JLZm9MSHVJS1lsWDd4a3dEU052SGQ2XzcybEc3MjMtU0tmQ3FGZG9KUVBiT2s5UzFuOE5Eczc2dzVzSFV1VGJUQzZGT1JQNFk4U3dqZEF6RDUtb3V1RUhOeVVjMHA1aG9jd1NMTTFyaXFkeGZjeEJwSTVDbjVsa2hMVVlqUzlUR3NVcGJpc1NmNUx4TGk3S2JIVTNwRGZnSDBCZkU3MlMxb3dDSVRSRnR5WnNQbkR0NE9ZNjRxMzI4RGNPd0VEaXJzZ3NNMHBoUkp4dU9KQl9hdHdoaEhPR3JUOXpvZ1NOOFFxWVR6TVJBNGlyY1AzWjY2NTVlQXNmcXhRM21HRWptZTV2eFpHMWFtaFFQNjV0a1NqTVZNbFNnbTFvaWJDUmxXd09ySDZwWVpCa0hJMU1XZVc5Zm5sbTdwVWlpNUNoT3phaWJQZEZobU9uTUE5UFNKMEJRVk5qUVpRblVQRjNacmltVnNQNWhUN0g5VlVNTVhDN2VnQVR2OGVGZ2lNM19YQksySUNZamJRMjN2dXRCWUJmRFRfSXM0NWRoamlnZHQxX2I4dkV6TjNnWXJuTzV1SnhGZlV2SG52dEkxbjVFeldJUHBkZnNtWndXZlp2NzN0U1lRYzAwa3VhNXIzNU9UZG9YZFoxSjNPMmsiLAogICAgICAidmVyaWZpY2F0aW9uTWV0aG9kIjogImRpZDp3ZWI6Z3gtY29tcGxpYW5jZS50ZXN0LmRpaC1jbG91ZC5jb20iCiAgICB9CiAgfQp9",
+        "document_name": "SelfDescription_LegalPerson_Test.json",
+        "document_type_id": 8,
+        "document_status_id": 2,
+        "company_user_id": "ac1cf001-7fbc-1f2f-817f-bce058020006",
+        "media_type_id": 7
+      }
+    ]
+
+
+
+---
+# Source: umbrella/templates/post-install-bdrs-setup.yaml
+# #############################################################################
+  # Copyright (c) 2021,2024 Contributors to the Eclipse Foundation
+  #
+  # See the NOTICE file(s) distributed with this work for additional
+  # information regarding copyright ownership.
+  #
+  # This program and the accompanying materials are made available under the
+  # terms of the Apache License, Version 2.0 which is available at
+  # https://www.apache.org/licenses/LICENSE-2.0.
+  #
+  # Unless required by applicable law or agreed to in writing, software
+  # distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+  # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+  # License for the specific language governing permissions and limitations
+  # under the License.
+  #
+  # SPDX-License-Identifier: Apache-2.0
+  # #############################################################################
+---
+
+
+---
+# Source: umbrella/charts/portal/templates/service-frontend-assets.yaml
+###############################################################
+# Copyright (c) 2022 Contributors to the Eclipse Foundation
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License, Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0.
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+###############################################################
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: umbrella-portal-assets
+  namespace: default
+  labels:
+    helm.sh/chart: portal-2.4.0
+    app.kubernetes.io/name: portal
+    app.kubernetes.io/instance: umbrella
+    app.kubernetes.io/version: "2.4.0"
+    app.kubernetes.io/managed-by: Helm
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8080
+    targetPort: 8080
+  selector:
+    app: umbrella-portal-assets
+    app.kubernetes.io/name: portal
+    app.kubernetes.io/instance: umbrella
+
+---
+# Source: umbrella/charts/portal/templates/configmap-backend-seeding-initialdata.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name:  "umbrella-portal-initial-data"
+  namespace: default
+data:
+  addresses.json: |-
+    [
+      {
+        "id": "b4db3945-19a7-4a50-97d6-e66e8dfd04fb",
+        "date_created": "2022-03-24 18:01:33.306000 +00:00",
+        "date_last_changed": "2022-03-24 18:01:33.306000 +00:00",
+        "city": "Munich",
+        "region": "BY",
+        "streetadditional": "",
+        "streetname": "Street",
+        "streetnumber": "1",
+        "zipcode": "0001",
+        "country_alpha2code": "DE"
+      }
+    ]
+  companies.json: |-
+    [
+      {
+        "id": "2dc4249f-b5ca-4d42-bef1-7a7a950a4f87",
+        "date_created": "2022-03-24 18:01:33.306000 +00:00",
+        "business_partner_number": "BPNL00000003CRHK",
+        "name": "Catena-X",
+        "shortname": "Catena-X",
+        "company_status_id": 2,
+        "address_id": "b4db3945-19a7-4a50-97d6-e66e8dfd04fb",
+        "self_description_document_id": "00000000-0000-0000-0000-000000000009"
+      }
+    ]
+
+---
+# Source: umbrella/charts/sharedidp/charts/keycloak/templates/headless-service.yaml
+
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: umbrella-sharedidp-headless
+  namespace: "default"
+  labels:
+    app.kubernetes.io/instance: umbrella
+    app.kubernetes.io/managed-by: Helm
+    app.kubernetes.io/name: sharedidp
+    app.kubernetes.io/version: 25.0.6
+    helm.sh/chart: keycloak-23.0.0
+    app.kubernetes.io/component: keycloak
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+    - name: http
+      port: 8080
+      protocol: TCP
+      targetPort: http
+  publishNotReadyAddresses: true
+  selector:
+    app.kubernetes.io/instance: umbrella
+    app.kubernetes.io/name: sharedidp
+    app.kubernetes.io/component: keycloak
+
+---
+# Source: umbrella/charts/portal/templates/secret-backend-mailing.yaml
+###############################################################
+# Copyright (c) 2022 Contributors to the Eclipse Foundation
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License, Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0.
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+###############################################################
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: portal-backend-mailing
+  namespace: default
+  labels:
+    helm.sh/chart: portal-2.4.0
+    app.kubernetes.io/name: portal
+    app.kubernetes.io/instance: umbrella
+    app.kubernetes.io/version: "2.4.0"
+    app.kubernetes.io/managed-by: Helm
+type: Opaque
+# use lookup function to check if secret exists
+stringData:
+  # if secret doesn't exist, use provided value from values file or generate a random one
+  password: "UwvsEiwTAtl0GXowYApk0qfnIBkidIbD"
+  provisioning-sharedrealm-password: "7ZVC0GKNqMIwJ5TFgOC9xnymqAOxolDJ"
+
+
+---
+# Source: umbrella/charts/portal/templates/deployment-backend-services.yaml
+#############################################################

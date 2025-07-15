@@ -1,0 +1,55 @@
+{{- if .Values.controlplane.ingress.enabled -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "eclipse-edc.fullname" . }}-controlplane
+  labels:
+    {{- include "eclipse-edc.labels" . | nindent 4 }}
+    component: controlplane
+  {{- with .Values.controlplane.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.controlplane.ingress.className }}
+  ingressClassName: {{ .Values.controlplane.ingress.className }}
+  {{- end }}
+  {{- if .Values.controlplane.ingress.tls.enabled }}
+  tls:
+  - hosts:
+    - {{ .Values.controlplane.ingress.hostname | quote }}
+    secretName: {{ .Values.controlplane.ingress.hostname }}-tls
+  {{- end }}
+  rules:
+  - host: {{ .Values.controlplane.ingress.hostname | quote }}
+    http:
+      paths:
+      - path: /api/v1/dsp
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ include "eclipse-edc.fullname" . }}-controlplane
+            port:
+              number: {{ .Values.controlplane.ports.protocol }}
+      - path: /management
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ include "eclipse-edc.fullname" . }}-controlplane
+            port:
+              number: {{ .Values.controlplane.ports.management }}
+      - path: /health
+        pathType: Exact
+        backend:
+          service:
+            name: {{ include "eclipse-edc.fullname" . }}-controlplane
+            port:
+              number: {{ .Values.controlplane.ports.management }}
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ include "eclipse-edc.fullname" . }}-controlplane
+            port:
+              number: {{ .Values.controlplane.ports.default }}
+{{- end }} 

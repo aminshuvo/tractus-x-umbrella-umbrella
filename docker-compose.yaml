@@ -1,0 +1,163 @@
+services:
+  edc-control-plane:
+    image: nuruldhamar/edc-controlplane:latest
+    container_name: edc-control-plane
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+      - "8083:8083"
+      - "8084:8084"
+      - "8085:8085"
+      - "9090:9090"
+    environment:
+      # Ports
+      - WEB_HTTP_DEFAULT_PORT=8080
+      - WEB_HTTP_MANAGEMENT_PORT=8081
+      - WEB_HTTP_CONTROL_PORT=8083
+      - WEB_HTTP_PROTOCOL_PORT=8084
+      - WEB_HTTP_CATALOG_PORT=8085
+      - WEB_HTTP_METRICS_PORT=9090
+
+      # Core Identity
+      - EDC_HOSTNAME=edc-control-plane
+      - EDC_PARTICIPANT_ID=control-plane
+      - EDC_STORAGE_TYPE=in-memory
+      - EDC_AUTH_TYPE=none
+
+      # Data Plane Selector URL
+      - EDC_DPF_SELECTOR_URL=http://edc-control-plane:8085
+
+      # DSP Protocol
+      - EDC_DSP_CALLBACK_ADDRESS=http://edc-control-plane:8084/api/v1/dsp
+      - EDC_DSP_CONTEXT_ENABLED=true
+      - EDC_DSP_MANAGEMENT_ENABLED=true
+      - EDC_DSP_WELL_KNOWN_PATH_ENABLED=false
+
+      # Retry / Logging
+      - EDC_CORE_RETRY_RETRIES_MAX=3
+      - EDC_CORE_RETRY_RETRIES_DELAY=1000
+      - EDC_CORE_RETRY_RETRIES_BACKOFF_MIN=1000
+      - EDC_CORE_RETRY_RETRIES_BACKOFF_MAX=10000
+      - LOGGING_LEVEL_EDC=INFO
+      - LOGGING_LEVEL_ROOT=WARN
+
+      # Metrics
+      - EDC_METRICS_ENABLED=true
+      - EDC_METRICS_REPORTING_CONSOLE_ENABLED=true
+
+      # Transfer & Catalog
+      - EDC_TRANSFER_TYPE=http
+      - EDC_TRANSFER_ENDPOINT_URL=http://edc-control-plane:8082
+      - EDC_CATALOG_ENDPOINT_URL=http://edc-control-plane:8083
+
+      # IAM (dummy for now)
+      - EDC_IAM_ISSUER_ID=test-issuer
+      - EDC_IAM_STS_OAUTH_TOKEN_URL=http://dummy-sts-url
+      - EDC_IAM_STS_OAUTH_CLIENT_ID=dummy-client-id
+      - EDC_IAM_STS_OAUTH_CLIENT_SECRET_ALIAS=dummy-client-secret-alias
+      - EDC_API_AUTH_DELEGATE_AUDIENCE=your-client-id
+
+
+      # Tractus-X placeholder
+      - TX_IAM_IATP_BDRS_SERVER_URL=http://dummy-bdrs-server-url
+
+      # Vault Integration
+      - EDC_VAULT_HASHICORP_URL=http://vault.tx.test
+      - EDC_VAULT_HASHICORP_TOKEN=your-vault-token-here
+      - EDC_VAULT_HASHICORP_API_SECRET_PATH=secret/
+      - EDC_VAULT_HASHICORP_HEALTH_CHECK_ENABLED=true
+      - EDC_VAULT_HASHICORP_HEALTH_CHECK_STANDBY_OK=true
+
+    networks:
+      - edc-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "8081"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  edc-data-plane:
+    image: nuruldhamar/edc-dataplane:latest
+    container_name: edc-data-plane
+    ports:
+      - "9080:8181"
+      - "9081:8182"
+      - "9082:8183"
+      - "9083:8184"
+      - "9084:8185"
+      - "9085:8186"
+    environment:
+      # Ports
+      - WEB_HTTP_DEFAULT_PORT=8181
+      - WEB_HTTP_DATA_PORT=8182
+      - WEB_HTTP_MANAGEMENT_PORT=8183
+      - WEB_HTTP_PUBLIC_PORT=8184
+      - WEB_HTTP_PROXY_PORT=8185
+      - WEB_HTTP_METRICS_PORT=8186
+
+      # Identity
+      - EDC_HOSTNAME=edc-data-plane
+      - EDC_PARTICIPANT_ID=data-plane
+      - EDC_STORAGE_TYPE=in-memory
+      - EDC_AUTH_TYPE=none
+
+      # Public API endpoint configuration (fixes the warning)
+      - EDC_DATAPLANE_API_PUBLIC_BASEURL=http://edc-data-plane:9083/api/public
+
+      # Control Plane -> Data Plane Selector URL
+      - EDC_DPF_SELECTOR_URL=http://edc-control-plane:8085/management/dataplanes
+
+      # Reverse Reference (Data Plane to Control Plane)
+      - EDC_CONTROL_PLANE_API_PORT=8080
+      - EDC_CONTROL_PLANE_MANAGEMENT_PORT=8081
+      - EDC_CONTROL_PLANE_DATAPLANE_SELECTOR_URL=http://edc-control-plane:8085/management/dataplanes
+
+      # DSP
+      - EDC_DSP_CALLBACK_ADDRESS=http://edc-data-plane:9084/api/v1/dsp
+      - EDC_DSP_CONTEXT_ENABLED=true
+      - EDC_DSP_MANAGEMENT_ENABLED=true
+      - EDC_DSP_WELL_KNOWN_PATH_ENABLED=false
+
+      # Retry / Logging
+      - EDC_CORE_RETRY_RETRIES_MAX=3
+      - EDC_CORE_RETRY_RETRIES_DELAY=1000
+      - EDC_CORE_RETRY_RETRIES_BACKOFF_MIN=1000
+      - EDC_CORE_RETRY_RETRIES_BACKOFF_MAX=10000
+      - LOGGING_LEVEL_EDC=INFO
+      - LOGGING_LEVEL_ROOT=WARN
+
+      # Metrics
+      - EDC_METRICS_ENABLED=true
+      - EDC_METRICS_REPORTING_CONSOLE_ENABLED=true
+
+      # Transfer Token Config
+      - EDC_TRANSFER_PROXY_TOKEN_SIGNER_PRIVATEKEY_ALIAS=test-signer
+      - EDC_TRANSFER_PROXY_TOKEN_VERIFIER_PUBLICKEY_ALIAS=test-verifier
+
+      # Tractus-X placeholder
+      - TX_IAM_IATP_BDRS_SERVER_URL=http://dummy-bdrs-server-url
+
+      # Vault Integration
+      - EDC_VAULT_HASHICORP_URL=http://vault.tx.test
+      - EDC_VAULT_HASHICORP_TOKEN=your-vault-token-here
+      - EDC_VAULT_HASHICORP_API_SECRET_PATH=secret/
+      - EDC_VAULT_HASHICORP_HEALTH_CHECK_ENABLED=true
+      - EDC_VAULT_HASHICORP_HEALTH_CHECK_STANDBY_OK=true
+
+    networks:
+      - edc-network
+    restart: unless-stopped
+    depends_on:
+      - edc-control-plane
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "8181"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  edc-network:
+    driver: bridge

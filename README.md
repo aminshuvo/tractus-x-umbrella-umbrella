@@ -140,6 +140,9 @@ kubectl -n umbrella apply -f vault-edc-token-secret.yaml
 
 ### Step 4: Install Tractus-X Umbrella
 
+You have two options for deployment:
+
+#### Option A: Standard Deployment (tx-data-provider)
 ```bash
 # Navigate to the umbrella chart directory
 cd charts/umbrella
@@ -151,9 +154,24 @@ helm dependency update
 helm install umbrella . -f values-dev.yaml -n umbrella --create-namespace --timeout 15m
 ```
 
-### Automatic Installation with Terraform and ArgoCD
+#### Option B: Eclipse EDC Deployment (Built from Source)
+```bash
+# Navigate to the umbrella chart directory
+cd charts/umbrella
 
-For automated deployment using Infrastructure as Code (IaC) and GitOps, follow these steps:
+# Update Helm dependencies
+helm dependency update
+
+# Install the umbrella chart with Eclipse EDC values
+helm install umbrella . -f values-eclipse-edc.yaml -n umbrella --create-namespace --timeout 15m
+```
+
+The Eclipse EDC deployment uses custom EDC images(nuruldhamar/edc-dataplane
+, nuruldhamar/edc-controlplane
+) built from the [Eclipse EDC Connector](https://github.com/eclipse-edc/Connector) source code, replacing the standard `tx-data-provider` component.
+
+
+For automated deployment using Infrastructure as Code (IaC) and GitOps, follow these steps(added support only for tractusx-umbrella):
 
 #### Prerequisites for Automatic Setup
 
@@ -249,14 +267,72 @@ The ArgoCD application is configured with:
 
 ## 🔧 Configuration
 
-### Values File
-The installation uses `values-dev.yaml` which includes:
+### Values Files
+
+The installation supports multiple deployment configurations:
+
+#### Standard Deployment (`values-dev.yaml`)
 - Portal configuration with backend services
 - Central and Shared IDP setup
-- EDC data provider and consumer components
+- EDC data provider and consumer components (tx-data-provider)
 - Semantic Hub and Business Partner Discovery
 - SSI Credential Issuer
 - Observability components (Prometheus, Grafana, Jaeger)
+
+#### Eclipse EDC Deployment (`values-eclipse-edc.yaml`)
+- Portal configuration with backend services
+- Central and Shared IDP setup
+- **Eclipse EDC Connector** (built from Eclipse EDC source)
+- Digital Twin Registry and Simple Data Backend
+- **Disabled**: Heavy components (semantic-hub, bpndiscovery, etc.) for resource optimization
+
+### Eclipse EDC Connector
+
+The Eclipse EDC Connector is a replacement for the standard `tx-data-provider` component, built directly from the [Eclipse EDC Connector](https://github.com/eclipse-edc/Connector) source code.
+
+**Available Builds:**
+- **Standard Eclipse EDC**: Uses `nuruldhamar/edc-controlplane` and `nuruldhamar/edc-dataplane` images
+- **Custom EDC Build**: Uses your own images built from [https://github.com/aminshuvo/edc-connector](https://github.com/aminshuvo/edc-connector)
+
+**Key Features:**
+- **Control Plane**: Manages data transfers, policies, and connector configuration
+- **Data Plane**: Handles actual data transfer operations
+- **Eclipse EDC Images**: Uses `nuruldhamar/edc-controlplane` and `nuruldhamar/edc-dataplane` (or your custom images)
+- **Vault Integration**: Integrates with HashiCorp Vault for secret management
+- **Tractus-X Compatibility**: Configured to work with Tractus-X IAM and BDRS
+
+**Access Points:**
+- **Control Plane**: `http://eclipse-edc-controlplane.tx.test`
+- **Data Plane**: `http://eclipse-edc-dataplane.tx.test`
+- **DSP Endpoint**: `http://eclipse-edc-controlplane.tx.test/api/v1/dsp`
+- **Management API**: `http://eclipse-edc-controlplane.tx.test/management`
+
+**Custom Build Instructions:**
+To use your own EDC build from [https://github.com/aminshuvo/edc-connector](https://github.com/aminshuvo/edc-connector):
+
+1. Clone and build your EDC connector:
+   ```bash
+   git clone https://github.com/aminshuvo/edc-connector.git
+   cd edc-connector
+   # Build your control plane and data plane images
+   ```
+
+2. Push images to your registry and update `values-eclipse-edc.yaml`:
+   ```yaml
+   eclipse-edc:
+     controlplane:
+       image:
+         repository: your-registry/edc-controlplane
+         tag: your-tag
+     dataplane:
+       image:
+         repository: your-registry/edc-dataplane
+         tag: your-tag
+   ```
+
+3. Deploy using Option C from the installation steps above.
+
+For more details, see the [Eclipse EDC Chart Documentation](charts/eclipse-edc/README.md).
 
 ### Local Patches
 This repository includes local patches for:
@@ -268,6 +344,8 @@ This repository includes local patches for:
 
 Once deployed, you can access the following services:
 
+![Tractus-X Portal Interface](images/portal.png)
+
 | Service | URL | Description |
 |---------|-----|-------------|
 | Portal | http://portal.tx.test | Main portal interface |
@@ -278,6 +356,8 @@ Once deployed, you can access the following services:
 | PgAdmin | http://pgadmin4.tx.test | Database administration |
 | Semantic Hub | http://semantics.tx.test | Semantic data management |
 | **ArgoCD** | http://argo.tx.test | GitOps deployment management |
+| **Eclipse EDC Control Plane** | http://eclipse-edc-controlplane.tx.test | Eclipse EDC Control Plane |
+| **Eclipse EDC Data Plane** | http://eclipse-edc-dataplane.tx.test | Eclipse EDC Data Plane |
 
 ### ArgoCD Access Information
 

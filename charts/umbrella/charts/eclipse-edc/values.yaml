@@ -1,0 +1,189 @@
+# Eclipse EDC Connector Values
+# Based on docker-compose.yaml configuration
+
+enabled: true
+seedTestdata: true
+backendUrl: http://eclipse-edc-submodelserver:8080
+registryUrl: http://eclipse-edc-dtr:8080/api/v3
+controlplanePublicUrl: http://eclipse-edc-controlplane:8084
+controlplaneManagementUrl: http://eclipse-edc-controlplane:8081
+dataplaneUrl: http://eclipse-edc-dataplane:8181
+nameOverride: eclipse-edc
+
+# Service account with Vault access
+serviceAccount:
+  create: true
+  name: eclipse-edc-vault-reader
+
+# Control Plane Configuration
+controlplane:
+  enabled: true
+  image:
+    repository: nuruldhamar/edc-controlplane
+    tag: latest
+    pullPolicy: Always
+  ports:
+    default: 8080
+    management: 8081
+    control: 8083
+    protocol: 8084
+    catalog: 8085
+    metrics: 9090
+  env:
+    EDC_HOSTNAME: "eclipse-edc-controlplane"
+    EDC_PARTICIPANT_ID: "BPNL00000003CRHK"
+    EDC_STORAGE_TYPE: "in-memory"
+    EDC_AUTH_TYPE: "none"
+    EDC_DPF_SELECTOR_URL: "http://eclipse-edc-controlplane:8085"
+    EDC_DSP_CALLBACK_ADDRESS: "http://eclipse-edc-controlplane:8084/api/v1/dsp"
+    EDC_DSP_CONTEXT_ENABLED: "true"
+    EDC_DSP_MANAGEMENT_ENABLED: "true"
+    EDC_DSP_WELL_KNOWN_PATH_ENABLED: "false"
+    EDC_CORE_RETRY_RETRIES_MAX: "3"
+    EDC_CORE_RETRY_RETRIES_DELAY: "1000"
+    EDC_CORE_RETRY_RETRIES_BACKOFF_MIN: "1000"
+    EDC_CORE_RETRY_RETRIES_BACKOFF_MAX: "10000"
+    LOGGING_LEVEL_EDC: "INFO"
+    LOGGING_LEVEL_ROOT: "WARN"
+    EDC_METRICS_ENABLED: "true"
+    EDC_METRICS_REPORTING_CONSOLE_ENABLED: "true"
+    EDC_TRANSFER_TYPE: "http"
+    EDC_TRANSFER_ENDPOINT_URL: "http://eclipse-edc-controlplane:8082"
+    EDC_CATALOG_ENDPOINT_URL: "http://eclipse-edc-controlplane:8083"
+    EDC_IAM_ISSUER_ID: "did:web:ssi-dim-wallet-stub.tx.test:BPNL00000003CRHK"
+    EDC_IAM_STS_OAUTH_TOKEN_URL: "http://ssi-dim-wallet-stub.tx.test/oauth/token"
+    EDC_IAM_STS_OAUTH_CLIENT_ID: "BPNL00000003CRHK"
+    EDC_IAM_STS_OAUTH_CLIENT_SECRET_ALIAS: "edc-wallet-secret"
+    EDC_API_AUTH_DELEGATE_AUDIENCE: "BPNL00000003CRHK"
+    TX_IAM_IATP_BDRS_SERVER_URL: "http://bdrs-server:8081/api/v1/directory"
+    TX_IAM_IATP_CREDENTIALSERVICE_URL: "http://ssi-dim-wallet-stub.tx.test/api"
+    EDC_IAM_DID_WEB_USE_HTTPS: "false"
+    EDC_VAULT_HASHICORP_URL: "http://vault.tx.test"
+    EDC_VAULT_HASHICORP_TOKEN: "your-vault-token-here"
+    EDC_VAULT_HASHICORP_API_SECRET_PATH: "secret/"
+    EDC_VAULT_HASHICORP_HEALTH_CHECK_ENABLED: "true"
+    EDC_VAULT_HASHICORP_HEALTH_CHECK_STANDBY_OK: "true"
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 2Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+  ingress:
+    enabled: true
+    hostname: "eclipse-edc-controlplane.tx.test"
+    className: "nginx"
+    tls:
+      enabled: false
+    annotations:
+      nginx.ingress.kubernetes.io/enable-cors: "true"
+      nginx.ingress.kubernetes.io/cors-allow-origin: "http://*.tx.test"
+
+# Data Plane Configuration
+dataplane:
+  enabled: true
+  image:
+    repository: nuruldhamar/edc-dataplane
+    tag: latest
+    pullPolicy: Always
+  ports:
+    default: 8181
+    data: 8182
+    management: 8183
+    public: 8184
+    proxy: 8185
+    metrics: 8186
+  env:
+    EDC_HOSTNAME: "eclipse-edc-dataplane"
+    EDC_PARTICIPANT_ID: "BPNL00000003CRHK"
+    EDC_STORAGE_TYPE: "in-memory"
+    EDC_AUTH_TYPE: "none"
+    EDC_DATAPLANE_API_PUBLIC_BASEURL: "http://eclipse-edc-dataplane:8184/api/public"
+    EDC_DPF_SELECTOR_URL: "http://eclipse-edc-controlplane:8085/management/dataplanes"
+    EDC_CONTROL_PLANE_API_PORT: "8080"
+    EDC_CONTROL_PLANE_MANAGEMENT_PORT: "8081"
+    EDC_CONTROL_PLANE_DATAPLANE_SELECTOR_URL: "http://eclipse-edc-controlplane:8085/management/dataplanes"
+    EDC_DSP_CALLBACK_ADDRESS: "http://eclipse-edc-dataplane:8184/api/v1/dsp"
+    EDC_DSP_CONTEXT_ENABLED: "true"
+    EDC_DSP_MANAGEMENT_ENABLED: "true"
+    EDC_DSP_WELL_KNOWN_PATH_ENABLED: "false"
+    EDC_CORE_RETRY_RETRIES_MAX: "3"
+    EDC_CORE_RETRY_RETRIES_DELAY: "1000"
+    EDC_CORE_RETRY_RETRIES_BACKOFF_MIN: "1000"
+    EDC_CORE_RETRY_RETRIES_BACKOFF_MAX: "10000"
+    LOGGING_LEVEL_EDC: "INFO"
+    LOGGING_LEVEL_ROOT: "WARN"
+    EDC_METRICS_ENABLED: "true"
+    EDC_METRICS_REPORTING_CONSOLE_ENABLED: "true"
+    EDC_TRANSFER_PROXY_TOKEN_SIGNER_PRIVATEKEY_ALIAS: "tokenSignerPrivateKey"
+    EDC_TRANSFER_PROXY_TOKEN_VERIFIER_PUBLICKEY_ALIAS: "tokenSignerPublicKey"
+    TX_IAM_IATP_BDRS_SERVER_URL: "http://bdrs-server:8081/api/v1/directory"
+    TX_IAM_IATP_CREDENTIALSERVICE_URL: "http://ssi-dim-wallet-stub.tx.test/api"
+    EDC_IAM_DID_WEB_USE_HTTPS: "false"
+    EDC_VAULT_HASHICORP_URL: "http://vault.tx.test"
+    EDC_VAULT_HASHICORP_TOKEN: "your-vault-token-here"
+    EDC_VAULT_HASHICORP_API_SECRET_PATH: "secret/"
+    EDC_VAULT_HASHICORP_HEALTH_CHECK_ENABLED: "true"
+    EDC_VAULT_HASHICORP_HEALTH_CHECK_STANDBY_OK: "true"
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 2Gi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+  ingress:
+    enabled: true
+    hostname: "eclipse-edc-dataplane.tx.test"
+    className: "nginx"
+    tls:
+      enabled: false
+    annotations:
+      nginx.ingress.kubernetes.io/enable-cors: "true"
+      nginx.ingress.kubernetes.io/cors-allow-origin: "http://*.tx.test"
+
+# Digital Twin Registry
+digital-twin-registry:
+  enabled: true
+  nameOverride: eclipse-edc-dtr
+  postgresql:
+    nameOverride: eclipse-edc-dtr-db
+    auth:
+      password: "dbpassworddtreclipseedc"
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 200m
+      memory: 256Mi
+  registry:
+    host: eclipse-edc-dtr.test
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 200m
+      memory: 256Mi
+
+# Simple Data Backend
+simple-data-backend:
+  enabled: true
+  nameOverride: eclipse-edc-submodelserver
+  ingress:
+    enabled: true
+    className: "nginx"
+    hosts:
+      - host: "eclipse-edc-submodelserver.tx.test"
+        paths:
+          - path: "/"
+            pathType: "Prefix"
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 200m
+      memory: 256Mi 

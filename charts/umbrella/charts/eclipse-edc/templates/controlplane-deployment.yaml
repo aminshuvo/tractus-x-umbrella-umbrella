@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "eclipse-edc.fullname" . }}-controlplane
+  labels:
+    {{- include "eclipse-edc.labels" . | nindent 4 }}
+    component: controlplane
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "eclipse-edc.selectorLabels" . | nindent 6 }}
+      component: controlplane
+  template:
+    metadata:
+      labels:
+        {{- include "eclipse-edc.selectorLabels" . | nindent 8 }}
+        component: controlplane
+    spec:
+      {{- if .Values.serviceAccount.create }}
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      {{- end }}
+      containers:
+      - name: controlplane
+        image: "{{ .Values.controlplane.image.repository }}:{{ .Values.controlplane.image.tag }}"
+        imagePullPolicy: {{ .Values.controlplane.image.pullPolicy }}
+        ports:
+        - name: default
+          containerPort: {{ .Values.controlplane.ports.default }}
+          protocol: TCP
+        - name: management
+          containerPort: {{ .Values.controlplane.ports.management }}
+          protocol: TCP
+        - name: control
+          containerPort: {{ .Values.controlplane.ports.control }}
+          protocol: TCP
+        - name: protocol
+          containerPort: {{ .Values.controlplane.ports.protocol }}
+          protocol: TCP
+        - name: catalog
+          containerPort: {{ .Values.controlplane.ports.catalog }}
+          protocol: TCP
+        - name: metrics
+          containerPort: {{ .Values.controlplane.ports.metrics }}
+          protocol: TCP
+        env:
+        - name: WEB_HTTP_DEFAULT_PORT
+          value: "{{ .Values.controlplane.ports.default }}"
+        - name: WEB_HTTP_MANAGEMENT_PORT
+          value: "{{ .Values.controlplane.ports.management }}"
+        - name: WEB_HTTP_CONTROL_PORT
+          value: "{{ .Values.controlplane.ports.control }}"
+        - name: WEB_HTTP_PROTOCOL_PORT
+          value: "{{ .Values.controlplane.ports.protocol }}"
+        - name: WEB_HTTP_CATALOG_PORT
+          value: "{{ .Values.controlplane.ports.catalog }}"
+        - name: WEB_HTTP_METRICS_PORT
+          value: "{{ .Values.controlplane.ports.metrics }}"
+        {{- range $key, $value := .Values.controlplane.env }}
+        - name: {{ $key }}
+          value: {{ $value | quote }}
+        {{- end }}
+        resources:
+          {{- toYaml .Values.controlplane.resources | nindent 10 }}
+        livenessProbe:
+          tcpSocket:
+            port: management
+          initialDelaySeconds: 40
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          tcpSocket:
+            port: management
+          initialDelaySeconds: 40
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3 

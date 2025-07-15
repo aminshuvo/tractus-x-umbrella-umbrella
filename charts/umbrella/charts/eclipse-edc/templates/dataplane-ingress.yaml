@@ -1,0 +1,55 @@
+{{- if .Values.dataplane.ingress.enabled -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "eclipse-edc.fullname" . }}-dataplane
+  labels:
+    {{- include "eclipse-edc.labels" . | nindent 4 }}
+    component: dataplane
+  {{- with .Values.dataplane.ingress.annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- if .Values.dataplane.ingress.className }}
+  ingressClassName: {{ .Values.dataplane.ingress.className }}
+  {{- end }}
+  {{- if .Values.dataplane.ingress.tls.enabled }}
+  tls:
+  - hosts:
+    - {{ .Values.dataplane.ingress.hostname | quote }}
+    secretName: {{ .Values.dataplane.ingress.hostname }}-tls
+  {{- end }}
+  rules:
+  - host: {{ .Values.dataplane.ingress.hostname | quote }}
+    http:
+      paths:
+      - path: /api/public
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ include "eclipse-edc.fullname" . }}-dataplane
+            port:
+              number: {{ .Values.dataplane.ports.public }}
+      - path: /api/v1/dsp
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ include "eclipse-edc.fullname" . }}-dataplane
+            port:
+              number: {{ .Values.dataplane.ports.public }}
+      - path: /health
+        pathType: Exact
+        backend:
+          service:
+            name: {{ include "eclipse-edc.fullname" . }}-dataplane
+            port:
+              number: {{ .Values.dataplane.ports.default }}
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ include "eclipse-edc.fullname" . }}-dataplane
+            port:
+              number: {{ .Values.dataplane.ports.default }}
+{{- end }}

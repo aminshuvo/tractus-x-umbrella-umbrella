@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "eclipse-edc.fullname" . }}-controlplane
+  labels:
+    {{- include "eclipse-edc.labels" . | nindent 4 }}
+    component: controlplane
+spec:
+  type: ClusterIP
+  ports:
+  - name: default
+    port: {{ .Values.controlplane.ports.default }}
+    targetPort: default
+    protocol: TCP
+  - name: management
+    port: {{ .Values.controlplane.ports.management }}
+    targetPort: management
+    protocol: TCP
+  - name: control
+    port: {{ .Values.controlplane.ports.control }}
+    targetPort: control
+    protocol: TCP
+  - name: protocol
+    port: {{ .Values.controlplane.ports.protocol }}
+    targetPort: protocol
+    protocol: TCP
+  - name: catalog
+    port: {{ .Values.controlplane.ports.catalog }}
+    targetPort: catalog
+    protocol: TCP
+  - name: metrics
+    port: {{ .Values.controlplane.ports.metrics }}
+    targetPort: metrics
+    protocol: TCP
+  selector:
+    {{- include "eclipse-edc.selectorLabels" . | nindent 4 }}
+    component: controlplane 

@@ -45,7 +45,11 @@ Submodel URL helpers
         {{- tpl .Values.backendUrl . }}
     {{- else if (index .Values "simple-data-backend" "ingress" "enabled") }}
         {{- with (first (index .Values "simple-data-backend" "ingress" "hosts")) }}
-            {{- printf "https://%s" .host }}
+            {{- if index $.Values "simple-data-backend" "ingress" "tls" "enabled" }}
+                {{- printf "https://%s" .host }}
+            {{- else }}
+                {{- printf "http://%s" .host }}
+            {{- end }}
         {{- end }}
     {{- else }}
         {{- printf "http://%s%s:8080" .Release.Name "-simple-data-backend" }}
@@ -57,7 +61,11 @@ Registry URL helpers
 */}}
 {{- define "registry.host" -}}
     {{- if index .Values "digital-twin-registry" "registry" "ingress" "enabled" }}
-        {{- printf "https://%s" (index .Values "digital-twin-registry" "registry" "host") }}
+        {{- if index .Values "digital-twin-registry" "registry" "ingress" "tls" "enabled" }}
+            {{- printf "https://%s" (index .Values "digital-twin-registry" "registry" "host") }}
+        {{- else }}
+            {{- printf "http://%s" (index .Values "digital-twin-registry" "registry" "host") }}
+        {{- end }}
     {{- else }}
         {{- printf "http://%s-%s:8080" .Release.Name "digital-twin-registry" }}
     {{- end }}
@@ -87,7 +95,11 @@ EDC URL helpers
     {{ else }}
         {{- with (first (index .Values "tractusx-connector" "controlplane" "ingresses")) }}
             {{- if .enabled }}
-                {{- printf "https://%s" .hostname }}
+                {{- if .tls.enabled }}
+                    {{- printf "https://%s" .hostname }}
+                {{- else }}
+                    {{- printf "http://%s" .hostname }}
+                {{- end }}
             {{- else }}
                 {{- printf "http://%s-%s:8084" $.Release.Name "tractusx-connector-controlplane" }}
             {{- end }}
@@ -101,7 +113,11 @@ EDC URL helpers
     {{ else }}
         {{- with (first (index .Values "tractusx-connector" "controlplane" "ingresses")) }}
             {{- if .enabled }}
-                {{- printf "https://%s" .hostname }}
+                {{- if .tls.enabled }}
+                    {{- printf "https://%s" .hostname }}
+                {{- else }}
+                    {{- printf "http://%s" .hostname }}
+                {{- end }}
             {{- else }}
                 {{- printf "http://%s-%s:8081" $.Release.Name "tractusx-connector-controlplane" }}
             {{- end }}
@@ -115,7 +131,11 @@ EDC URL helpers
     {{ else }}
         {{- with (first (index .Values "tractusx-connector" "dataplane" "ingresses")) }}
             {{- if .enabled }}
-                {{- printf "https://%s" .hostname }}
+                {{- if .tls.enabled }}
+                    {{- printf "https://%s" .hostname }}
+                {{- else }}
+                    {{- printf "http://%s" .hostname }}
+                {{- end }}
             {{- else }}
                 {{- printf "http://%s-%s:8081" $.Release.Name "tractusx-connector-dataplane" }}
             {{- end }}

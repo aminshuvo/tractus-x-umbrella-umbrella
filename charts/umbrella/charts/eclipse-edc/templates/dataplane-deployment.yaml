@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "eclipse-edc.fullname" . }}-dataplane
+  labels:
+    {{- include "eclipse-edc.labels" . | nindent 4 }}
+    component: dataplane
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "eclipse-edc.selectorLabels" . | nindent 6 }}
+      component: dataplane
+  template:
+    metadata:
+      labels:
+        {{- include "eclipse-edc.selectorLabels" . | nindent 8 }}
+        component: dataplane
+    spec:
+      {{- if .Values.serviceAccount.create }}
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      {{- end }}
+      containers:
+      - name: dataplane
+        image: "{{ .Values.dataplane.image.repository }}:{{ .Values.dataplane.image.tag }}"
+        imagePullPolicy: {{ .Values.dataplane.image.pullPolicy }}
+        ports:
+        - name: default
+          containerPort: {{ .Values.dataplane.ports.default }}
+          protocol: TCP
+        - name: data
+          containerPort: {{ .Values.dataplane.ports.data }}
+          protocol: TCP
+        - name: management
+          containerPort: {{ .Values.dataplane.ports.management }}
+          protocol: TCP
+        - name: public
+          containerPort: {{ .Values.dataplane.ports.public }}
+          protocol: TCP
+        - name: proxy
+          containerPort: {{ .Values.dataplane.ports.proxy }}
+          protocol: TCP
+        - name: metrics
+          containerPort: {{ .Values.dataplane.ports.metrics }}
+          protocol: TCP
+        env:
+        - name: WEB_HTTP_DEFAULT_PORT
+          value: "{{ .Values.dataplane.ports.default }}"
+        - name: WEB_HTTP_DATA_PORT
+          value: "{{ .Values.dataplane.ports.data }}"
+        - name: WEB_HTTP_MANAGEMENT_PORT
+          value: "{{ .Values.dataplane.ports.management }}"
+        - name: WEB_HTTP_PUBLIC_PORT
+          value: "{{ .Values.dataplane.ports.public }}"
+        - name: WEB_HTTP_PROXY_PORT
+          value: "{{ .Values.dataplane.ports.proxy }}"
+        - name: WEB_HTTP_METRICS_PORT
+          value: "{{ .Values.dataplane.ports.metrics }}"
+        {{- range $key, $value := .Values.dataplane.env }}
+        - name: {{ $key }}
+          value: {{ $value | quote }}
+        {{- end }}
+        resources:
+          {{- toYaml .Values.dataplane.resources | nindent 10 }}
+        livenessProbe:
+          tcpSocket:
+            port: default
+          initialDelaySeconds: 40
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3
+        readinessProbe:
+          tcpSocket:
+            port: default
+          initialDelaySeconds: 40
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 3 
